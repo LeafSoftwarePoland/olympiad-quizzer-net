@@ -39,27 +39,38 @@ else
     }
     else
     {
-        <div class="verdict @(_result!.IsCorrect ? "verdict-correct" : "verdict-wrong")" aria-live="polite">
-            @if (_result.IsCorrect)
+        <div class="quiz-revealed-layout @(HasExplanation(q) ? "has-explanation" : "")">
+            <div class="quiz-left">
+                <div class="verdict @(_result!.IsCorrect ? "verdict-correct" : "verdict-wrong")" aria-live="polite">
+                    @if (_result.IsCorrect)
+                    {
+                        <span>POPRAWNIE</span>
+                    }
+                    else
+                    {
+                        <span>BŁĄD</span>
+                    }
+                </div>
+
+                @if (!_result.IsCorrect)
+                {
+                    <div class="correct-answer-block">
+                        <strong>Poprawna odpowiedź:</strong> @CorrectAnswerText(q)
+                    </div>
+                }
+
+                <button class="btn" @ref="_nextButton" @onclick="Advance">
+                    @(_idx < Session.Questions.Count - 1 ? "Dalej" : "Zobacz wynik")
+                </button>
+            </div>
+            @if (HasExplanation(q))
             {
-                <span>POPRAWNIE</span>
-            }
-            else
-            {
-                <span>BŁĄD</span>
+                <div class="explanation-panel">
+                    <h2>Wyjaśnienie:</h2>
+                    <BlockRenderer Blocks="q.Explanation!" />
+                </div>
             }
         </div>
-
-        @if (!_result.IsCorrect)
-        {
-            <div class="correct-answer-block">
-                <strong>Poprawna odpowiedź:</strong> @CorrectAnswerText(q)
-            </div>
-        }
-
-        <button class="btn" @ref="_nextButton" @onclick="Advance">
-            @(_idx < Session.Questions.Count - 1 ? "Dalej" : "Zobacz wynik")
-        </button>
     }
 }
 
@@ -145,6 +156,8 @@ else
             try { await _nextButton.FocusAsync(); } catch { }
         }
     }
+
+    static bool HasExplanation(Question q) => q.Explanation is { Count: > 0 };
 
     static string CorrectAnswerText(Question q) => q.Type switch
     {

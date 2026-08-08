@@ -6,7 +6,7 @@
 
 @if (!Session.IsStarted)
 {
-    Nav.NavigateTo("/");
+    Nav.NavigateTo(Nav.BaseUri);
     return;
 }
 

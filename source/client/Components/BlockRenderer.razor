@@ -1,0 +1,19 @@
+@foreach (var block in Blocks)
+{
+    if (block.Type == "code")
+    {
+        <pre><code>@block.Text</code></pre>
+    }
+    else if (block.Type == "image")
+    {
+        <img src="@block.File" class="explanation-img" alt="" />
+    }
+    else
+    {
+        <p>@block.Text</p>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public List<ContentBlock> Blocks { get; set; } = default!;
+}

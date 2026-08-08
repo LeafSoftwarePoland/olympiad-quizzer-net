@@ -20,7 +20,14 @@
     "options": ["Pierwsza opcja (A)", "Druga opcja (B)", "Trzecia opcja (C)", "Czwarta opcja (D)"],
     "matchOptions": null,
     "correctAnswer": [2],
-    "points": 1, "partialCredit": false, "tags": [], "sourceUrls": [], "explanation": null
+    "points": 1, "partialCredit": false, "tags": [], "sourceUrls": [],
+    "explanation": [
+      { "type": "text", "text": "Funkcja range(n) generuje sekwencję liczb całkowitych od 0 do n−1. W przykładzie range(3) daje kolejno wartości 0, 1, 2 — pętla wykona się dokładnie trzy razy, za każdym razem wypisując gwiazdkę." },
+      { "type": "code", "text": "# Wynik działania programu:\n*\n*\n*" },
+      { "type": "text", "text": "Pętle for w Pythonie iterują po dowolnej sekwencji iterowalnej. Zapis range(start, stop, step) pozwala kontrolować punkt startowy, końcowy i krok pomiędzy kolejnymi wartościami." },
+      { "type": "code", "text": "# Wariant z trzema parametrami:\nfor i in range(1, 7, 2):\n    print(i)\n# Wynik: 1  3  5" },
+      { "type": "image", "file": "explanation-range.png" }
+    ]
   },
   {
     "id": "poc-3", "source": "other", "competition": "POC", "voivodeship": null, "stage": null, "year": "2026",
