@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/source/" />
+  <Folder Name="/source/api/">
+    <Project Path="source/api/OlympiadQuizzer.Api.csproj" />
+  </Folder>
+  <Folder Name="/source/client/">
+    <Project Path="source/client/OlympiadQuizzer.Client.csproj" />
+  </Folder>
+  <Folder Name="/source/shared/">
+    <Project Path="source/shared/OlympiadQuizzer.Shared.csproj" />
+  </Folder>
+  <Folder Name="/source/tests/">
+    <Project Path="source/tests/OlympiadQuizzer.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,68 @@
+name: deploy-frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'source/client/**'
+      - 'source/shared/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish
+        shell: powershell
+        run: dotnet publish source/client/OlympiadQuizzer.Client.csproj -c Release -o publish-out
+
+      - name: Rewrite base href, inject API URL, add Pages files
+        shell: powershell
+        env:
+          RENDER_API_URL: ${{ secrets.RENDER_API_URL }}
+        run: |
+          $root = "publish-out/wwwroot"
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+          $index = Join-Path $root "index.html"
+          $html  = [System.IO.File]::ReadAllText($index)
+          $html  = $html -replace '<base\s+href="[^"]*"\s*/?>', '<base href="/olympiad-quizzer-net/" />'
+          [System.IO.File]::WriteAllText($index, $html, $utf8NoBom)
+
+          Copy-Item $index (Join-Path $root "404.html") -Force
+
+          [System.IO.File]::WriteAllText((Join-Path $root ".nojekyll"), "", $utf8NoBom)
+
+          $cfg = '{ "ApiBaseUrl": "' + $env:RENDER_API_URL.TrimEnd('/') + '" }'
+          [System.IO.File]::WriteAllText((Join-Path $root "appsettings.json"), $cfg, $utf8NoBom)
+
+          Get-Content (Join-Path $root "appsettings.json")
+
+      - uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: publish-out/wwwroot
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5.0.0

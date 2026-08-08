@@ -1,0 +1,33 @@
+<fieldset>
+    <legend>Zaznacz wszystkie poprawne odpowiedzi.</legend>
+    <ul class="options-list">
+        @for (int i = 0; i < (Question.Options?.Count ?? 0); i++)
+        {
+            var idx = i;
+            var letter = (char)('A' + idx);
+            var inputId = $"ms-{Question.Id}-{idx}";
+            <li>
+                <input type="checkbox" id="@inputId"
+                       disabled="@ReadOnly"
+                       checked="@Submission.SelectedIndices.Contains(idx)"
+                       @onchange="e => Toggle(idx, (bool)e.Value!)" />
+                <label for="@inputId">
+                    <span class="option-label">@letter</span>
+                    @Question.Options![idx]
+                </label>
+            </li>
+        }
+    </ul>
+</fieldset>
+
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; } = default!;
+    [Parameter, EditorRequired] public AnswerSubmission Submission { get; set; } = default!;
+    [Parameter] public bool ReadOnly { get; set; }
+
+    void Toggle(int idx, bool on)
+    {
+        if (on) { if (!Submission.SelectedIndices.Contains(idx)) Submission.SelectedIndices.Add(idx); }
+        else Submission.SelectedIndices.Remove(idx);
+    }
+}

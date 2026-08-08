@@ -1,0 +1,19 @@
+@foreach (var block in Question.Content)
+{
+    if (block.Type == "code")
+    {
+        <pre><code>@block.Text</code></pre>
+    }
+    else if (block.Type == "image")
+    {
+        <p><em>[obraz — poza zakresem POC]</em></p>
+    }
+    else
+    {
+        <p>@block.Text</p>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; } = default!;
+}

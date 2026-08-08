@@ -1,0 +1,33 @@
+<div role="radiogroup" aria-label="Wybierz jedną odpowiedź">
+    <ul class="options-list">
+        @for (int i = 0; i < (Question.Options?.Count ?? 0); i++)
+        {
+            var idx = i;
+            var letter = (char)('A' + idx);
+            var inputId = $"sa-{Question.Id}-{idx}";
+            <li>
+                <input type="radio" id="@inputId"
+                       name="@($"radio-{Question.Id}")"
+                       disabled="@ReadOnly"
+                       checked="@Submission.SelectedIndices.Contains(idx)"
+                       @onchange="() => Select(idx)" />
+                <label for="@inputId">
+                    <span class="option-label">@letter</span>
+                    @Question.Options![idx]
+                </label>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; } = default!;
+    [Parameter, EditorRequired] public AnswerSubmission Submission { get; set; } = default!;
+    [Parameter] public bool ReadOnly { get; set; }
+
+    void Select(int idx)
+    {
+        Submission.SelectedIndices.Clear();
+        Submission.SelectedIndices.Add(idx);
+    }
+}
