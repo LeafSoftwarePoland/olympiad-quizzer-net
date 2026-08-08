@@ -46,7 +46,7 @@ a:hover {
 }
 
 main {
-    max-width: 800px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
     flex: 1;
@@ -379,6 +379,7 @@ legend {
 .quiz-main {
     flex: 1;
     min-width: 0;
+    max-width: 680px;
 }
 
 .explanation-tab {
