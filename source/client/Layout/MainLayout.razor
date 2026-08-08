@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject HttpClient Http
 <NavMenu />
 <div class="font-controls">
     <button class="btn btn-sm" @onclick="DecreaseFont" title="Zmniejsz tekst">A−</button>
@@ -8,11 +9,18 @@
 <main>
     @Body
 </main>
-<footer class="app-footer">LeafSoftware Tomasz Mankin &copy; 2026</footer>
+<footer class="app-footer">
+    <span>LeafSoftware Tomasz Mankin &copy; 2026</span>
+    @if (!string.IsNullOrEmpty(_version))
+    {
+        <span class="footer-version">v@_version</span>
+    }
+</footer>
 
 @code {
     private int _fontSize = 17;
     private string _theme = "dark";
+    private string _version = "";
 
     private void IncreaseFont()
     {
@@ -51,6 +59,13 @@
                 _theme = "ps";
                 await JS.InvokeVoidAsync("eval", "document.documentElement.setAttribute('data-theme','ps')");
             }
+            try
+            {
+                var v = await Http.GetFromJsonAsync<System.Text.Json.JsonElement>("version.json");
+                _version = v.GetProperty("frontend").GetString() ?? "";
+                StateHasChanged();
+            }
+            catch { }
         }
     }
 }

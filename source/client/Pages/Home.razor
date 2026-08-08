@@ -1,26 +1,12 @@
 @page "/"
 @inject NavigationManager Nav
-@inject HttpClient Http
 
 <PageTitle>Olympiad Quizzer</PageTitle>
 
 <h1>Olympiad Quizzer</h1>
 <p>Ćwicz przed olimpiadą — odpowiedz na pytania z różnych typów zadań.</p>
 <button class="btn" @onclick="Start">Rozpocznij quiz</button>
-<p class="version-info">v@frontendVersion</p>
 
 @code {
-    private string frontendVersion = "";
-
     void Start() => Nav.NavigateTo("quiz");
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            var v = await Http.GetFromJsonAsync<System.Text.Json.JsonElement>("version.json");
-            frontendVersion = v.GetProperty("frontend").GetString() ?? "";
-        }
-        catch { }
-    }
 }

@@ -16,13 +16,20 @@
     --font: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, "DejaVu Sans Mono", monospace;
 }
 
-html, body {
+html {
+    background: var(--bg);
+    min-height: 100%;
+}
+
+body {
     background: var(--bg);
     color: var(--text);
     font-family: var(--font);
     font-size: 17px;
     line-height: 1.65;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 a {
@@ -38,6 +45,7 @@ main {
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem 1.5rem 4rem;
+    flex: 1;
 }
 
 h1, h2, h3 {
@@ -307,7 +315,6 @@ pre code {
     margin-right: 0.4rem;
 }
 
-.version-info { color: var(--text-dim); font-size: 0.75rem; margin-top: 2rem; }
 .font-controls { display: flex; gap: 0.5rem; padding: 0.25rem 1rem; justify-content: flex-end; }
 .btn-sm { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
 
@@ -329,16 +336,31 @@ nav, .nav-links { display: flex; gap: 1.5rem; padding: 0.75rem 1rem; border-bott
     .btn { min-height: 44px; padding: 0.6rem 1.2rem; }
 }
 
+fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+legend {
+    color: var(--text-dim);
+    font-size: 0.88rem;
+    margin-bottom: 0.5rem;
+    padding: 0;
+}
+
 .app-footer {
-    position: sticky;
-    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background: var(--bg);
     border-top: 1px solid var(--border);
     color: var(--text-dim);
     font-size: 0.75rem;
-    text-align: center;
-    padding: 0.4rem 1rem;
+    padding: 0.5rem 1.5rem;
 }
+
+.footer-version { color: var(--text-dim); font-size: 0.75rem; }
 
 .quiz-revealed-layout { display: block; }
 
