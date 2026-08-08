@@ -59,23 +59,23 @@ else
                     </div>
                 }
 
-                @if (HasExplanation(q))
-                {
-                    <button class="explanation-toggle btn btn-sm" @onclick="() => _showExplanation = !_showExplanation">
-                        Wyjaśnienie @(_showExplanation ? "✕" : "▸")
-                    </button>
-                }
-
                 <button class="btn" @ref="_nextButton" @onclick="Advance">
                     @(_idx < Session.Questions.Count - 1 ? "Dalej" : "Zobacz wynik")
                 </button>
             </div>
-            @if (_showExplanation && HasExplanation(q))
+            @if (HasExplanation(q))
             {
-                <div class="explanation-blade">
-                    <h2>Wyjaśnienie:</h2>
-                    <BlockRenderer Blocks="q.Explanation!" />
-                </div>
+                <button class="explanation-tab" @onclick="() => _showExplanation = !_showExplanation"
+                        aria-label="@(_showExplanation ? "Schowaj wyjaśnienie" : "Pokaż wyjaśnienie")">
+                    @(_showExplanation ? "Schowaj wyjaśnienie" : "Pokaż wyjaśnienie")
+                </button>
+                @if (_showExplanation)
+                {
+                    <div class="explanation-blade">
+                        <h2>Wyjaśnienie:</h2>
+                        <BlockRenderer Blocks="q.Explanation!" />
+                    </div>
+                }
             }
         </div>
     }
