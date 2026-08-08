@@ -62,3 +62,4 @@ actions-runner/
 # Pipeline artifacts — local only, not for version control
 .pipeline/
 
+source/client/wwwroot/lib/
