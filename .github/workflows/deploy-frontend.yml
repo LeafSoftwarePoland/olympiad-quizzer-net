@@ -20,16 +20,20 @@ concurrency:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
 
+      - uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
       - name: Publish
-        shell: powershell
+        shell: pwsh
         run: dotnet publish source/client/OlympiadQuizzer.Client.csproj -c Release -o publish-out
 
       - name: Rewrite base href, inject API URL, add Pages files
-        shell: powershell
+        shell: pwsh
         env:
           RENDER_API_URL: ${{ secrets.RENDER_API_URL }}
         run: |
@@ -56,7 +60,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
