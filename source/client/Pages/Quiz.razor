@@ -7,7 +7,7 @@
 
 @if (_loading)
 {
-    <p class="progress">Budzenie serwera… może potrwać do minuty.</p>
+    <p class="quiz-progress">Budzenie serwera… może potrwać do minuty.</p>
 }
 else if (_error is not null)
 {
@@ -28,7 +28,7 @@ else
     var q = Session.Questions[_idx];
 
     <div class="quiz-header">
-        <span class="progress">@(_idx + 1) / @Session.Questions.Count</span>
+        <span class="quiz-progress">@(_idx + 1) / @Session.Questions.Count</span>
     </div>
 
     <QuestionRenderer Question="q" Submission="_submission" ReadOnly="_revealed" />

@@ -90,7 +90,7 @@ pre code {
     font-size: inherit;
 }
 
-.progress {
+.quiz-progress {
     color: var(--text-dim);
     font-size: 0.85rem;
     margin-bottom: 0;
