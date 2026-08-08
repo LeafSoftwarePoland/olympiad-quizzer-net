@@ -39,7 +39,7 @@ else
     }
     else
     {
-        <div class="quiz-revealed-layout @(HasExplanation(q) ? "has-explanation" : "")">
+        <div class="quiz-revealed-layout @(_showExplanation && HasExplanation(q) ? "blade-open" : "")">
             <div class="quiz-left">
                 <div class="verdict @(_result!.IsCorrect ? "verdict-correct" : "verdict-wrong")" aria-live="polite">
                     @if (_result.IsCorrect)
@@ -59,13 +59,20 @@ else
                     </div>
                 }
 
+                @if (HasExplanation(q))
+                {
+                    <button class="explanation-toggle btn btn-sm" @onclick="() => _showExplanation = !_showExplanation">
+                        Wyjaśnienie @(_showExplanation ? "✕" : "▸")
+                    </button>
+                }
+
                 <button class="btn" @ref="_nextButton" @onclick="Advance">
                     @(_idx < Session.Questions.Count - 1 ? "Dalej" : "Zobacz wynik")
                 </button>
             </div>
-            @if (HasExplanation(q))
+            @if (_showExplanation && HasExplanation(q))
             {
-                <div class="explanation-panel">
+                <div class="explanation-blade">
                     <h2>Wyjaśnienie:</h2>
                     <BlockRenderer Blocks="q.Explanation!" />
                 </div>
@@ -80,6 +87,7 @@ else
     int _idx;
     AnswerSubmission _submission = new();
     bool _revealed;
+    bool _showExplanation = false;
     GradeResult? _result;
     ElementReference _nextButton;
     int _prevIdx = -1;
@@ -145,6 +153,7 @@ else
     {
         _submission = new AnswerSubmission();
         _revealed = false;
+        _showExplanation = false;
         _result = null;
     }
 

@@ -61,9 +61,14 @@
             }
             try
             {
-                var v = await Http.GetFromJsonAsync<System.Text.Json.JsonElement>("version.json");
-                _version = v.GetProperty("frontend").GetString() ?? "";
-                StateHasChanged();
+                var resp = await Http.GetAsync("version.json");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    var doc = System.Text.Json.JsonDocument.Parse(json);
+                    _version = doc.RootElement.GetProperty("frontend").GetString() ?? "";
+                    StateHasChanged();
+                }
             }
             catch { }
         }

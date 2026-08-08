@@ -27,9 +27,13 @@ body {
     font-family: var(--font);
     font-size: 17px;
     line-height: 1.65;
-    min-height: 100vh;
+    margin: 0;
+}
+
+#app {
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
 a {
@@ -362,10 +366,12 @@ legend {
 
 .footer-version { color: var(--text-dim); font-size: 0.75rem; }
 
-.quiz-revealed-layout { display: block; }
+.quiz-revealed-layout {
+    display: block;
+}
 
 @media (min-width: 768px) {
-    .quiz-revealed-layout.has-explanation {
+    .quiz-revealed-layout.blade-open {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
@@ -373,12 +379,22 @@ legend {
     }
 }
 
-.explanation-panel {
+.explanation-blade {
     border-left: 2px solid var(--border);
     padding-left: 1.5rem;
 }
 
-.explanation-panel h2 {
+@media (max-width: 767px) {
+    .explanation-blade {
+        border-left: none;
+        border-top: 2px solid var(--border);
+        padding-left: 0;
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+}
+
+.explanation-blade h2 {
     font-size: 0.85rem;
     color: var(--text-dim);
     margin-bottom: 0.75rem;
@@ -390,6 +406,18 @@ legend {
     max-width: 100%;
     margin-top: 1rem;
     border: 1px solid var(--border);
+}
+
+.explanation-toggle {
+    margin-bottom: 0.75rem;
+    border-color: var(--border);
+    color: var(--text-dim);
+    font-size: 0.8rem;
+}
+
+.explanation-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 :root[data-theme="ps"] {
