@@ -12,7 +12,7 @@
                        checked="@Submission.SelectedIndices.Contains(idx)"
                        @onchange="e => Toggle(idx, (bool)e.Value!)" />
                 <label for="@inputId">
-                    <span class="option-label">@letter</span>
+                    <span class="option-letter">@letter</span>
                     @Question.Options![idx]
                 </label>
             </li>
