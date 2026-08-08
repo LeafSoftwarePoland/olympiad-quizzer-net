@@ -27,22 +27,22 @@ else
 {
     var q = Session.Questions[_idx];
 
-    <div class="quiz-header">
+    <div class="quiz-progress-row">
         <span class="quiz-progress">@(_idx + 1) / @Session.Questions.Count</span>
     </div>
 
-    <QuestionRenderer Question="q" Submission="_submission" ReadOnly="_revealed" />
+    <div class="quiz-content-area @(_showExplanation && HasExplanation(q) ? "explanation-visible" : "")">
+        <div class="quiz-main">
+            <QuestionRenderer Question="q" Submission="_submission" ReadOnly="_revealed" />
 
-    @if (!_revealed)
-    {
-        <button class="btn" @onclick="Check">Sprawdź</button>
-    }
-    else
-    {
-        <div class="quiz-revealed-layout @(_showExplanation && HasExplanation(q) ? "blade-open" : "")">
-            <div class="quiz-left">
+            @if (!_revealed)
+            {
+                <button class="btn" @onclick="Check">Sprawdź</button>
+            }
+            else
+            {
                 <div class="verdict @(_result!.IsCorrect ? "verdict-correct" : "verdict-wrong")" aria-live="polite">
-                    @if (_result.IsCorrect)
+                    @if (_result!.IsCorrect)
                     {
                         <span>POPRAWNIE</span>
                     }
@@ -62,23 +62,25 @@ else
                 <button class="btn" @ref="_nextButton" @onclick="Advance">
                     @(_idx < Session.Questions.Count - 1 ? "Dalej" : "Zobacz wynik")
                 </button>
-            </div>
-            @if (HasExplanation(q))
-            {
-                <button class="explanation-tab" @onclick="() => _showExplanation = !_showExplanation"
-                        aria-label="@(_showExplanation ? "Schowaj wyjaśnienie" : "Pokaż wyjaśnienie")">
-                    @(_showExplanation ? "Schowaj wyjaśnienie" : "Pokaż wyjaśnienie")
-                </button>
-                @if (_showExplanation)
-                {
-                    <div class="explanation-blade">
-                        <h2>Wyjaśnienie:</h2>
-                        <BlockRenderer Blocks="q.Explanation!" />
-                    </div>
-                }
             }
         </div>
-    }
+
+        @if (_revealed && HasExplanation(q))
+        {
+            <button class="explanation-tab" @onclick="() => _showExplanation = !_showExplanation"
+                    title="@(_showExplanation ? "Schowaj wyjaśnienie" : "Pokaż wyjaśnienie")">
+                @(_showExplanation ? "Schowaj wyjaśnienie" : "Pokaż wyjaśnienie")
+            </button>
+        }
+
+        @if (_showExplanation && HasExplanation(q))
+        {
+            <div class="explanation-blade">
+                <h2>Wyjaśnienie:</h2>
+                <BlockRenderer Blocks="q.Explanation!" />
+            </div>
+        }
+    </div>
 }
 
 @code {
