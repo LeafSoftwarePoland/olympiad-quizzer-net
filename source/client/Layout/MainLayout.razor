@@ -1,5 +1,32 @@
 @inherits LayoutComponentBase
 <NavMenu />
+<div class="font-controls">
+    <button class="btn btn-sm" @onclick="DecreaseFont" title="Zmniejsz tekst">A−</button>
+    <button class="btn btn-sm" @onclick="IncreaseFont" title="Zwiększ tekst">A+</button>
+</div>
 <main>
     @Body
 </main>
+
+@code {
+    private int _fontSize = 17;
+
+    private void IncreaseFont()
+    {
+        _fontSize = Math.Min(_fontSize + 1, 26);
+        ApplyFont();
+    }
+
+    private void DecreaseFont()
+    {
+        _fontSize = Math.Max(_fontSize - 1, 13);
+        ApplyFont();
+    }
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private async void ApplyFont()
+    {
+        await JS.InvokeVoidAsync("eval", $"document.documentElement.style.fontSize='{_fontSize}px'");
+    }
+}
