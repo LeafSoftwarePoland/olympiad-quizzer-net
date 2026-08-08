@@ -1,0 +1,14 @@
+<div>
+    <input class="open-input"
+           type="text"
+           aria-label="Odpowiedź"
+           disabled="@ReadOnly"
+           value="@Submission.Text"
+           @oninput="e => Submission.Text = e.Value?.ToString()" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; } = default!;
+    [Parameter, EditorRequired] public AnswerSubmission Submission { get; set; } = default!;
+    [Parameter] public bool ReadOnly { get; set; }
+}

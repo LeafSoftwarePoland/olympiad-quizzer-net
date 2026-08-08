@@ -55,3 +55,14 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# GitHub Actions self-hosted runner
+actions-runner/
+
+# Pipeline operational state (gitignored per SPEC Section 6.6)
+.pipeline/STATE.md
+.pipeline/feedback/
+.pipeline/critiques/
+.pipeline/1-architecture/decision-needed.md
+.pipeline/1-architecture/discovery-progress.md
+

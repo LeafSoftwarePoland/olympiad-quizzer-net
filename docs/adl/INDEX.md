@@ -1,6 +1,6 @@
 # Architecture Decision Log
 
-Last updated: 2026-08-08 (ADR-011 camelCase keys)
+Last updated: 2026-08-08 (ADR-020/021/022 added — architecture phase)
 
 | ADR | Title | Status | Date |
 |---|---|---|---|
@@ -23,3 +23,12 @@ Last updated: 2026-08-08 (ADR-011 camelCase keys)
 | [ADR-017](ADR-017-aria-accessibility-upfront.md) | ARIA accessibility built upfront | Accepted | 2026-08-08 |
 | [ADR-018](ADR-018-pwa-deferred.md) | PWA / Service Worker — deferred | Deferred | 2026-08-08 |
 | [ADR-019](ADR-019-language-policy.md) | Language policy | Accepted | 2026-08-08 |
+| [ADR-020](ADR-020-poc-ships-thin-api.md) | POC ships a thin API (amends ADR-002) | Accepted | 2026-08-08 |
+| [ADR-021](ADR-021-shared-class-library.md) | Shared class library for models and grader | Accepted | 2026-08-08 |
+| [ADR-022](ADR-022-poc-schema-field-bindings.md) | POC schema field bindings and answer semantics (clarifies ADR-011) | Accepted | 2026-08-08 |
+
+## Amendment graph
+
+- **ADR-002** (no backend Phase 1) — amended for POC scope by **ADR-020**. Not superseded: static-JSON delivery stays the fallback via the ADR-003 seam.
+- **ADR-011** (unified schema) — clarified, not changed, by **ADR-022**. ADR-022 pins per-type meaning of `options` / `matchOptions` / `correctAnswer` and the short-answer normalization pipeline.
+- **ADR-007** (Render.com) — still `Accepted (test pending)`. The POC is the test; update after manual check M11.
