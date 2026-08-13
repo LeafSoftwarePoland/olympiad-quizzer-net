@@ -1,0 +1,127 @@
+@page "/quiz/summary"
+@inject QuizSession Session
+@inject QuizSessionStore Store
+@inject NavigationManager Nav
+
+<HeadContent>
+    <meta name="robots" content="noindex" />
+</HeadContent>
+
+<PageTitle>Wynik — Olympiad Quizzer</PageTitle>
+
+@if (_state == null || _results == null)
+{
+    <p>Wróć do <a href="@Nav.BaseUri">strony głównej</a>.</p>
+}
+else
+{
+    <p class="summary-score">@_correct / @_state.Questions.Count poprawnych — @_totalPoints.ToString("G3") / @_maxPoints.ToString("G3") pkt</p>
+    <h1>Wynik quizu</h1>
+
+    <table class="breakdown-table">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Typ</th>
+                <th scope="col">Wynik</th>
+                <th scope="col">Punkty</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < _state.Questions.Count; i++)
+            {
+                Question q = _state.Questions[i];
+                GradeResult result = _results[i];
+
+                <tr>
+                    <td>@(i + 1)</td>
+                    <td>@TypeLabel(q.Type)</td>
+                    <td class="@(result.IsCorrect ? "hit" : "miss")">@(result.IsCorrect ? "+" : "−")</td>
+                    <td>@result.PointsAwarded.ToString("G3") / @q.Points</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="summary-actions">
+        <button class="btn" @onclick="RestartAsync">Jeszcze raz</button>
+    </div>
+}
+
+@code {
+    private QuizSessionState _state;
+    private List<GradeResult> _results;
+    private int _correct;
+    private double _totalPoints;
+    private double _maxPoints;
+
+    protected override void OnInitialized()
+    {
+        _state = Session.State;
+
+        if (_state == null)
+        {
+            Nav.NavigateTo(Nav.BaseUri);
+            return;
+        }
+
+        ComputeResults();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Store.ClearAsync();
+        }
+    }
+
+    private void ComputeResults()
+    {
+        _results = new List<GradeResult>(_state.Questions.Count);
+        _correct = 0;
+        _totalPoints = 0;
+        _maxPoints = 0;
+
+        for (int i = 0; i < _state.Questions.Count; i++)
+        {
+            GradeResult result = Grader.Grade(_state.Questions[i], _state.Answers[i]);
+            _results.Add(result);
+
+            _totalPoints += result.PointsAwarded;
+            _maxPoints += result.MaxPoints;
+            if (result.IsCorrect)
+            {
+                _correct++;
+            }
+        }
+    }
+
+    private async Task RestartAsync()
+    {
+        Session.Reset();
+        await Store.ClearAsync();
+        Nav.NavigateTo("quiz");
+    }
+
+    private static string TypeLabel(QuestionType type)
+    {
+        switch (type)
+        {
+            case QuestionType.Single:
+                return "Jednokrotny wybór";
+            case QuestionType.Multi:
+                return "Wielokrotny wybór";
+            case QuestionType.ShortAnswer:
+                return "Odpowiedź otwarta";
+            case QuestionType.TrueFalse:
+                return "Prawda/fałsz";
+            case QuestionType.Ordering:
+                return "Kolejność";
+            case QuestionType.Matching:
+                return "Dopasowanie";
+            default:
+                return "Nieznany";
+        }
+    }
+}

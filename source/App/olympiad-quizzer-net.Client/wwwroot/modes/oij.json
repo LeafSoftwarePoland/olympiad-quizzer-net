@@ -1,0 +1,45 @@
+{
+  "olympiad_id": "OIJ",
+  "name": "Olimpiada Informatyczna Juniorów",
+  "governing_body": "MEN",
+  "source_url": "https://oij.edu.pl",
+  "seasons_available": [2019, 2020, 2021, 2023, 2024, 2025],
+  "stages": [
+    {
+      "stage_id": "E1",
+      "name": "Etap Szkolny",
+      "question_count": 30,
+      "time_limit_minutes": 90,
+      "allowed_question_types": ["single", "multi", "shortAnswer"],
+      "answer_strict_casing": false,
+      "strict_casing": false,
+      "partial_points": false,
+      "passing_threshold": null,
+      "points_per_question": 1
+    },
+    {
+      "stage_id": "E2",
+      "name": "Etap Okręgowy",
+      "question_count": null,
+      "time_limit_minutes": null,
+      "allowed_question_types": ["single", "multi", "shortAnswer"],
+      "answer_strict_casing": false,
+      "strict_casing": false,
+      "partial_points": false,
+      "passing_threshold": null,
+      "points_per_question": null
+    },
+    {
+      "stage_id": "E3",
+      "name": "Etap Ogólnopolski",
+      "question_count": null,
+      "time_limit_minutes": null,
+      "allowed_question_types": ["single", "multi", "shortAnswer"],
+      "answer_strict_casing": false,
+      "strict_casing": false,
+      "partial_points": false,
+      "passing_threshold": null,
+      "points_per_question": null
+    }
+  ]
+}

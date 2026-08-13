@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+.git/
+.github/
+.pipeline/
+.research/
+.resources/
+.remember/
+.vs/
+actions-runner/
+docs/
+source/
+App/olympiad-quizzer-net.Client/
+App/olympiad-quizzer-net.Domain.L0/
+App/olympiad-quizzer-net.API.L1/
+publish-out/
+*.md

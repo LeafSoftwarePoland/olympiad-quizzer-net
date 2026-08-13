@@ -1,0 +1,35 @@
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; }
+    [Parameter, EditorRequired] public SubmittedAnswer Answer { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public EventCallback<SubmittedAnswer> AnswerChanged { get; set; }
+
+    private void Select(string optionValue)
+    {
+        SubmittedAnswer updated = new SubmittedAnswer();
+        updated.Values.Add(optionValue);
+        AnswerChanged.InvokeAsync(updated);
+    }
+}
+
+<div role="radiogroup" aria-label="Wybierz jedną odpowiedź">
+    <ul class="options-list">
+        @for (int i = 0; i < (Question.Options?.Count ?? 0); i++)
+        {
+            string optionValue = Question.Options[i];
+            string inputId = $"sq-{Question.Id}-{i}";
+            bool isSelected = Answer != null && Answer.Values.Count == 1 && Answer.Values[0] == optionValue;
+
+            <li>
+                <input type="radio"
+                       id="@inputId"
+                       name="@($"radio-{Question.Id}")"
+                       disabled="@ReadOnly"
+                       checked="@isSelected"
+                       @onchange="() => Select(optionValue)"
+                       aria-label="@optionValue" />
+                <label for="@inputId">@optionValue</label>
+            </li>
+        }
+    </ul>
+</div>

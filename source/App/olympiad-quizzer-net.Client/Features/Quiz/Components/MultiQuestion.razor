@@ -1,0 +1,50 @@
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; }
+    [Parameter, EditorRequired] public SubmittedAnswer Answer { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public EventCallback<SubmittedAnswer> AnswerChanged { get; set; }
+
+    private void Toggle(string optionValue, bool on)
+    {
+        SubmittedAnswer updated = new SubmittedAnswer();
+        if (Answer != null)
+        {
+            updated.Values.AddRange(Answer.Values);
+        }
+
+        if (on)
+        {
+            if (!updated.Values.Contains(optionValue))
+            {
+                updated.Values.Add(optionValue);
+            }
+        }
+        else
+        {
+            updated.Values.Remove(optionValue);
+        }
+
+        AnswerChanged.InvokeAsync(updated);
+    }
+}
+
+<fieldset>
+    <legend>Zaznacz wszystkie poprawne odpowiedzi.</legend>
+    <ul class="options-list">
+        @for (int i = 0; i < (Question.Options?.Count ?? 0); i++)
+        {
+            string optionValue = Question.Options[i];
+            string inputId = $"mq-{Question.Id}-{i}";
+            bool isChecked = Answer != null && Answer.Values.Contains(optionValue);
+
+            <li>
+                <input type="checkbox"
+                       id="@inputId"
+                       disabled="@ReadOnly"
+                       checked="@isChecked"
+                       @onchange="e => Toggle(optionValue, (bool)e.Value)" />
+                <label for="@inputId">@optionValue</label>
+            </li>
+        }
+    </ul>
+</fieldset>

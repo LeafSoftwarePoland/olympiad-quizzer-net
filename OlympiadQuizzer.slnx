@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/App/">
+    <Project Path="source/App/olympiad-quizzer-net.API/olympiad-quizzer-net.API.csproj" />
+    <Project Path="source/App/olympiad-quizzer-net.Client/olympiad-quizzer-net.Client.csproj" />
+    <Project Path="source/App/olympiad-quizzer-net.Domain.L0/olympiad-quizzer-net.Domain.L0.csproj" />
+    <Project Path="source/App/olympiad-quizzer-net.API.L1/olympiad-quizzer-net.API.L1.csproj" />
+  </Folder>
+  <Folder Name="/Core/">
+    <Project Path="source/Core/olympiad-quizzer-net.Domain/olympiad-quizzer-net.Domain.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="source/Infrastructure/olympiad-quizzer-net.SQLite/olympiad-quizzer-net.SQLite.csproj" />
+  </Folder>
+</Solution>

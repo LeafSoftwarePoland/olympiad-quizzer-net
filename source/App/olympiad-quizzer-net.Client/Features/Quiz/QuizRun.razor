@@ -1,0 +1,200 @@
+@page "/quiz/run"
+@inject QuizSession Session
+@inject QuizSessionStore Store
+@inject NavigationManager Nav
+@implements IAsyncDisposable
+
+<HeadContent>
+    <meta name="robots" content="noindex" />
+</HeadContent>
+
+<PageTitle>Quiz — Olympiad Quizzer</PageTitle>
+
+@if (_redirecting)
+{
+    <p class="quiz-progress">Przekierowanie…</p>
+}
+else if (_state != null && _currentQuestion != null)
+{
+    <div class="quiz-progress-row">
+        <span class="quiz-progress">
+            Pytanie @(_state.CurrentIndex + 1) z @_state.Questions.Count
+        </span>
+        @if (_state.Timed)
+        {
+            TimeSpan remaining = ExamTimer.Remaining(_state, DateTimeOffset.UtcNow);
+            string timerClass = remaining.TotalSeconds <= 60 ? "timer-display timer-urgent"
+                              : remaining.TotalSeconds <= 300 ? "timer-display timer-warning"
+                              : "timer-display";
+            <span class="@timerClass" aria-label="Pozostały czas">
+                @remaining.ToString(@"mm\:ss")
+            </span>
+        }
+    </div>
+
+    <div class="quiz-content-area">
+        <div class="quiz-main">
+            <QuestionRenderer Question="_currentQuestion"
+                              Answer="_currentAnswer"
+                              ReadOnly="_revealed"
+                              AnswerChanged="OnAnswerChanged" />
+
+            @if (!_revealed)
+            {
+                <button class="btn" @onclick="CheckAnswer">Sprawdź</button>
+            }
+            else
+            {
+                <div class="verdict @(_gradeResult.IsCorrect ? "verdict-correct" : "verdict-wrong")"
+                     role="status" aria-live="polite">
+                    @(_gradeResult.IsCorrect ? "POPRAWNIE" : "BŁĄD")
+                </div>
+
+                @if (!_gradeResult.IsCorrect)
+                {
+                    <div class="correct-answer-block">
+                        <strong>Poprawna odpowiedź:</strong> @CorrectAnswerText(_currentQuestion)
+                    </div>
+                }
+
+                <button class="btn" @ref="_nextButtonRef" @onclick="AdvanceAsync">
+                    @(Session.IsLastQuestion ? "Zobacz wynik" : "Dalej")
+                </button>
+            }
+        </div>
+
+        @if (_revealed)
+        {
+            <ExplanationBlade Question="_currentQuestion" />
+        }
+    </div>
+}
+
+@code {
+    private QuizSessionState _state;
+    private Question _currentQuestion;
+    private SubmittedAnswer _currentAnswer = SubmittedAnswer.Empty;
+    private bool _revealed;
+    private GradeResult _gradeResult;
+    private ElementReference _nextButtonRef;
+    private PeriodicTimer _timer;
+    private bool _redirecting;
+    private int _lastFocusedIndex = -1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Session.HasSession)
+        {
+            bool resumed = await Session.TryResumeAsync();
+            if (!resumed)
+            {
+                _redirecting = true;
+                Nav.NavigateTo("quiz");
+                return;
+            }
+        }
+
+        LoadCurrentQuestion();
+
+        if (Session.State != null && Session.State.Timed)
+        {
+            StartTimer();
+        }
+    }
+
+    private void LoadCurrentQuestion()
+    {
+        _state = Session.State;
+        _currentQuestion = Session.CurrentQuestion;
+        _currentAnswer = SubmittedAnswer.Empty;
+        _revealed = false;
+        _gradeResult = null;
+    }
+
+    private void OnAnswerChanged(SubmittedAnswer answer)
+    {
+        _currentAnswer = answer;
+    }
+
+    private void CheckAnswer()
+    {
+        _gradeResult = Session.SubmitAnswer(_currentAnswer);
+        _revealed = true;
+    }
+
+    private async Task AdvanceAsync()
+    {
+        await Session.AdvanceAsync();
+
+        if (Session.Status == QuizSessionStatus.Complete)
+        {
+            Nav.NavigateTo("quiz/summary");
+            return;
+        }
+
+        LoadCurrentQuestion();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_revealed && _state != null && _lastFocusedIndex != _state.CurrentIndex)
+        {
+            _lastFocusedIndex = _state.CurrentIndex;
+            try
+            {
+                await _nextButtonRef.FocusAsync();
+            }
+            catch (Microsoft.JSInterop.JSException)
+            {
+                // Focus failed because the element is not yet in the DOM; non-fatal.
+            }
+        }
+    }
+
+    private void StartTimer()
+    {
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        _ = RunTimerAsync();
+    }
+
+    private async Task RunTimerAsync()
+    {
+        while (await _timer.WaitForNextTickAsync())
+        {
+            await InvokeAsync(StateHasChanged);
+
+            if (_state != null && _state.Timed)
+            {
+                TimeSpan remaining = ExamTimer.Remaining(_state, DateTimeOffset.UtcNow);
+                if (remaining == TimeSpan.Zero)
+                {
+                    // Time expired: clear stored session and show results for what was answered.
+                    await Store.ClearAsync();
+                    Nav.NavigateTo("quiz/summary");
+                    break;
+                }
+            }
+        }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        if (_timer != null)
+        {
+            _timer.Dispose();
+            _timer = null;
+        }
+
+        return ValueTask.CompletedTask;
+    }
+
+    private static string CorrectAnswerText(Question question)
+    {
+        if (question.CorrectAnswer == null || question.CorrectAnswer.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        return string.Join(", ", question.CorrectAnswer);
+    }
+}

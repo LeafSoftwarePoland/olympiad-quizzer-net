@@ -1,0 +1,103 @@
+name: deploy-backend
+run-name: >-
+  Deploy Backend ${{ inputs.version != '' && format('v{0}', inputs.version) || '(auto patch bump)' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version major.minor.patch — leave empty to auto-bump the patch'
+        required: false
+        default: ''
+
+permissions:
+  contents: write     # tag creation needs write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.resolve.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0      # tags are not fetched at depth 1
+
+      - id: resolve
+        shell: bash
+        env:
+          REQUESTED: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          git fetch --tags --force
+
+          if [ -n "$REQUESTED" ]; then
+            if ! printf '%s' "$REQUESTED" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::Version '$REQUESTED' is not major.minor.patch."
+              exit 1
+            fi
+            if git rev-parse -q --verify "refs/tags/backend-v$REQUESTED" >/dev/null; then
+              echo "::error::Tag backend-v$REQUESTED already exists."
+              exit 1
+            fi
+            backend="$REQUESTED"
+          else
+            latest="$(git tag --list 'backend-v*' | sed 's/^backend-v//' | sort -V | tail -n 1)"
+            if [ -z "$latest" ]; then
+              backend="1.0.0"
+            else
+              major="${latest%%.*}"
+              rest="${latest#*.}"
+              minor="${rest%%.*}"
+              patch="${rest#*.}"
+              backend="$major.$minor.$((patch + 1))"
+            fi
+          fi
+
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
+          echo "### Deploy Backend v$backend" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: [version]
+    runs-on: self-hosted
+    steps:
+      - name: Trigger Render deploy hook
+        shell: powershell
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          $r = Invoke-WebRequest -Uri $env:HOOK -Method POST -UseBasicParsing
+          Write-Host "Deploy hook: $($r.StatusCode)"
+          if ($r.StatusCode -ne 200) { exit 1 }
+
+      - name: Wait for healthz
+        shell: powershell
+        run: |
+          $url      = "https://olympiad-quizzer-net-api.onrender.com/healthz"
+          $deadline = (Get-Date).AddMinutes(5)
+          Start-Sleep -Seconds 30
+          while ((Get-Date) -lt $deadline) {
+            try {
+              $r = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 20
+              if ($r.StatusCode -eq 200) { Write-Host "healthz OK: $($r.Content)"; exit 0 }
+            } catch { Write-Host "waiting..." }
+            Start-Sleep -Seconds 15
+          }
+          Write-Error "healthz did not return 200 within 5 minutes"
+          exit 1
+
+  tag:
+    needs: [version, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.backend }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "backend-v$VERSION" -m "Backend release v$VERSION"
+          git push origin "backend-v$VERSION"

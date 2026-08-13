@@ -1,0 +1,85 @@
+@page "/settings"
+@inject PreferencesService Prefs
+@inject IJSRuntime JS
+
+<HeadContent>
+    <meta name="robots" content="noindex" />
+</HeadContent>
+
+<PageTitle>Ustawienia — Olympiad Quizzer</PageTitle>
+
+<h1>Ustawienia</h1>
+
+<div class="settings-row">
+    <span class="settings-label">Motyw</span>
+    <fieldset>
+        <legend class="visually-hidden">Motyw kolorystyczny</legend>
+        <label>
+            <input type="radio"
+                   name="theme"
+                   value="dark"
+                   checked="@(Prefs.Theme == "dark")"
+                   @onchange="SetDarkThemeAsync"
+                   aria-label="Ciemny" />
+            Ciemny
+        </label>
+        &nbsp;
+        <label>
+            <input type="radio"
+                   name="theme"
+                   value="ps"
+                   checked="@(Prefs.Theme == "ps")"
+                   @onchange="SetLightThemeAsync"
+                   aria-label="Jasny" />
+            Jasny
+        </label>
+    </fieldset>
+</div>
+
+<div class="settings-row">
+    <span class="settings-label">Rozmiar tekstu</span>
+    <input type="range"
+           class="range-input"
+           min="0.8"
+           max="1.4"
+           step="0.1"
+           value="@Prefs.FontScale.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+           @oninput="OnFontScaleChanged"
+           aria-label="Rozmiar tekstu" />
+    <span>@Prefs.FontScale.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)x</span>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Prefs.LoadAsync();
+    }
+
+    private async Task SetDarkThemeAsync(ChangeEventArgs e)
+    {
+        await ApplyThemeAsync("dark");
+    }
+
+    private async Task SetLightThemeAsync(ChangeEventArgs e)
+    {
+        await ApplyThemeAsync("ps");
+    }
+
+    private async Task OnFontScaleChanged(ChangeEventArgs e)
+    {
+        if (float.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture, out float scale))
+        {
+            await Prefs.SetFontScaleAsync(scale);
+            string scaleStr = scale.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+            await JS.InvokeVoidAsync("olympiad.setFontScale", scaleStr);
+        }
+    }
+
+    private async Task ApplyThemeAsync(string theme)
+    {
+        await Prefs.SetThemeAsync(theme);
+        string themeAttr = theme == "ps" ? "ps" : "";
+        await JS.InvokeVoidAsync("olympiad.setTheme", themeAttr);
+    }
+}

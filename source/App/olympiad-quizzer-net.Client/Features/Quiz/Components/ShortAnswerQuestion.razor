@@ -1,0 +1,28 @@
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; }
+    [Parameter, EditorRequired] public SubmittedAnswer Answer { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public EventCallback<SubmittedAnswer> AnswerChanged { get; set; }
+
+    private string CurrentText => Answer != null && Answer.Values.Count > 0 ? Answer.Values[0] : string.Empty;
+
+    private void UpdateText(string text)
+    {
+        SubmittedAnswer updated = new SubmittedAnswer();
+        if (!string.IsNullOrEmpty(text))
+        {
+            updated.Values.Add(text);
+        }
+
+        AnswerChanged.InvokeAsync(updated);
+    }
+}
+
+<div>
+    <input class="open-input"
+           type="text"
+           aria-label="Odpowiedź"
+           disabled="@ReadOnly"
+           value="@CurrentText"
+           @oninput="e => UpdateText(e.Value?.ToString())" />
+</div>

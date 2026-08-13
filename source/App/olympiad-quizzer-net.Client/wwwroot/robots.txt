@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /$
+Disallow: /quiz
+Disallow: /quiz/
+Disallow: /settings

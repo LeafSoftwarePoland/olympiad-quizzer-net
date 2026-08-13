@@ -1,0 +1,25 @@
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; }
+
+    private bool _visible;
+
+    private bool HasExplanation => Question?.Explanation != null && Question.Explanation.Count > 0;
+}
+
+@if (HasExplanation)
+{
+    <button class="explanation-tab"
+            @onclick="() => _visible = !_visible"
+            title="@(_visible ? "Schowaj wyjaśnienie" : "Pokaż wyjaśnienie")"
+            aria-expanded="@_visible.ToString().ToLowerInvariant()">
+        @(_visible ? "Schowaj wyjaśnienie" : "Pokaż wyjaśnienie")
+    </button>
+
+    @if (_visible)
+    {
+        <div class="explanation-blade" aria-label="Wyjaśnienie">
+            <h2>Wyjaśnienie</h2>
+            <BlockRenderer Blocks="Question.Explanation" />
+        </div>
+    }
+}

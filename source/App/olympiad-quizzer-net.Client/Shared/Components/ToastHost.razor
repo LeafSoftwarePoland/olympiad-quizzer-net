@@ -1,0 +1,34 @@
+@inject ToastService Toasts
+@implements IDisposable
+
+<div class="toast-host" role="status" aria-live="polite" aria-atomic="false">
+    @foreach (ToastMessage msg in Toasts.Messages)
+    {
+        string cssKind = msg.Kind switch
+        {
+            ToastKind.Success => "toast-success",
+            ToastKind.Error => "toast-error",
+            _ => "toast-info"
+        };
+        <div class="toast @cssKind">
+            @msg.Message
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Toasts.OnChange += HandleChange;
+    }
+
+    private void HandleChange()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Toasts.OnChange -= HandleChange;
+    }
+}

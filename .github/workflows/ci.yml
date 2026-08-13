@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      # setup-dotnet omitted: .NET 10 SDK is pre-installed on the self-hosted runner.
+      # The action requires write access to C:\Program Files\dotnet which the runner
+      # service account does not have.
+
+      - name: Build
+        run: dotnet build OlympiadQuizzer.slnx -c Release
+
+      - name: Test
+        run: dotnet test OlympiadQuizzer.slnx -c Release --no-build --logger "console;verbosity=normal"
+
+  # build-docker omitted: Docker Desktop is not available on the self-hosted runner
+  # (permission denied on npipe:////./pipe/docker_engine). The Dockerfile is exercised
+  # on every Render.com deploy via deploy-backend.yml.

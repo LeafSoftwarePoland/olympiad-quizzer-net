@@ -1,0 +1,46 @@
+@inherits LayoutComponentBase
+@inject AppVersionService VersionService
+@inject PreferencesService Prefs
+@inject IJSRuntime JS
+
+<NavMenu />
+
+<main>
+    @Body
+</main>
+
+<footer class="app-footer">
+    <span>LeafSoftware Tomasz Mankin &copy; 2026</span>
+    @if (!string.IsNullOrEmpty(_frontendVersion))
+    {
+        <span class="footer-version">v@_frontendVersion</span>
+    }
+</footer>
+
+<ToastHost />
+
+@code {
+    private string _frontendVersion = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await Prefs.LoadAsync();
+        await ApplyPreferencesAsync();
+
+        _frontendVersion = await VersionService.GetFrontendVersionAsync();
+        StateHasChanged();
+    }
+
+    private async Task ApplyPreferencesAsync()
+    {
+        string scaleStr = Prefs.FontScale.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+        string themeAttr = Prefs.Theme == "ps" ? "ps" : "";
+        await JS.InvokeVoidAsync("olympiad.setFontScale", scaleStr);
+        await JS.InvokeVoidAsync("olympiad.setTheme", themeAttr);
+    }
+}

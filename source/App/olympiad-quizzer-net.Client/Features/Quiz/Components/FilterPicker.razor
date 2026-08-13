@@ -1,0 +1,168 @@
+@inject IQuestionRepository Repository
+@inject ToastService Toasts
+
+@code {
+    [Parameter] public QuestionQuery Query { get; set; }
+    [Parameter] public EventCallback<QuestionQuery> QueryChanged { get; set; }
+
+    private FilterOptions _options;
+    private bool _loading = true;
+    private bool _serverUnavailable;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFiltersAsync();
+    }
+
+    private async Task LoadFiltersAsync()
+    {
+        _loading = true;
+        _serverUnavailable = false;
+
+        try
+        {
+            _options = await Repository.GetFilterOptionsAsync(System.Threading.CancellationToken.None);
+        }
+        catch (System.Net.Http.HttpRequestException)
+        {
+            _serverUnavailable = true;
+        }
+        catch (Exception ex)
+        {
+            Toasts.ShowError("Nie udało się załadować filtrów: " + ex.Message);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ToggleCategory(string value)
+    {
+        QuestionQuery updated = CloneQuery();
+        if (updated.Categories.Contains(value))
+        {
+            updated.Categories.Remove(value);
+        }
+        else
+        {
+            updated.Categories.Add(value);
+        }
+
+        QueryChanged.InvokeAsync(updated);
+    }
+
+    private void ToggleStage(string value)
+    {
+        QuestionQuery updated = CloneQuery();
+        if (updated.Stages.Contains(value))
+        {
+            updated.Stages.Remove(value);
+        }
+        else
+        {
+            updated.Stages.Add(value);
+        }
+
+        QueryChanged.InvokeAsync(updated);
+    }
+
+    private void ToggleYear(string value)
+    {
+        if (!int.TryParse(value, out int year))
+        {
+            return;
+        }
+
+        QuestionQuery updated = CloneQuery();
+        if (updated.Years.Contains(year))
+        {
+            updated.Years.Remove(year);
+        }
+        else
+        {
+            updated.Years.Add(year);
+        }
+
+        QueryChanged.InvokeAsync(updated);
+    }
+
+    private QuestionQuery CloneQuery()
+    {
+        QuestionQuery cloned = new QuestionQuery
+        {
+            Limit = Query.Limit
+        };
+        cloned.Categories.AddRange(Query.Categories);
+        cloned.Algorithms.AddRange(Query.Algorithms);
+        cloned.Stages.AddRange(Query.Stages);
+        cloned.Years.AddRange(Query.Years);
+        return cloned;
+    }
+}
+
+@if (_loading)
+{
+    <p class="quiz-progress">Ładowanie filtrów…</p>
+}
+else if (_serverUnavailable)
+{
+    <ServerUnavailable OnRetry="LoadFiltersAsync" />
+}
+else if (_options != null)
+{
+    @if (_options.Stages.Count > 0)
+    {
+        <fieldset class="filter-section">
+            <legend>Etap</legend>
+            <div class="filter-chips" role="group" aria-label="Wybierz etap">
+                @foreach (FilterOption stage in _options.Stages)
+                {
+                    bool selected = Query.Stages.Contains(stage.Value);
+                    <button class="filter-chip @(selected ? "selected" : "")"
+                            @onclick="() => ToggleStage(stage.Value)"
+                            aria-pressed="@selected.ToString().ToLowerInvariant()">
+                        @stage.Value (@stage.Count)
+                    </button>
+                }
+            </div>
+        </fieldset>
+    }
+
+    @if (_options.Categories.Count > 0)
+    {
+        <fieldset class="filter-section">
+            <legend>Kategoria</legend>
+            <div class="filter-chips" role="group" aria-label="Wybierz kategorię">
+                @foreach (FilterOption cat in _options.Categories)
+                {
+                    bool selected = Query.Categories.Contains(cat.Value);
+                    <button class="filter-chip @(selected ? "selected" : "")"
+                            @onclick="() => ToggleCategory(cat.Value)"
+                            aria-pressed="@selected.ToString().ToLowerInvariant()">
+                        @cat.Value (@cat.Count)
+                    </button>
+                }
+            </div>
+        </fieldset>
+    }
+
+    @if (_options.Years.Count > 0)
+    {
+        <fieldset class="filter-section">
+            <legend>Rok</legend>
+            <div class="filter-chips" role="group" aria-label="Wybierz rok">
+                @foreach (FilterOption yr in _options.Years)
+                {
+                    int.TryParse(yr.Value, out int yrInt);
+                    bool selected = Query.Years.Contains(yrInt);
+                    <button class="filter-chip @(selected ? "selected" : "")"
+                            @onclick="() => ToggleYear(yr.Value)"
+                            aria-pressed="@selected.ToString().ToLowerInvariant()">
+                        @yr.Value (@yr.Count)
+                    </button>
+                }
+            </div>
+        </fieldset>
+    }
+}
