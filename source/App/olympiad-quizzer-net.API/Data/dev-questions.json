@@ -1,0 +1,124 @@
+[
+  {
+    "id": 1,
+    "category": ["programowanie_python"],
+    "algorithms": [],
+    "olympiad": "OIJ",
+    "stage": 1,
+    "year": 2025,
+    "source": "Dev fixture",
+    "sourceUrl": "",
+    "explanationSource": "",
+    "type": "single",
+    "content": [
+      { "type": "text", "text": "Które słowo kluczowe w Pythonie służy do definiowania funkcji?" }
+    ],
+    "options": ["class", "def", "fun", "func"],
+    "correctAnswer": "def",
+    "points": 1,
+    "partialCredit": false,
+    "explanation": "W Pythonie funkcje definiuje się słowem kluczowym `def`, np. `def moja_funkcja():`. Słowo `class` służy do definiowania klas."
+  },
+  {
+    "id": 2,
+    "category": ["sledzenie_kodu"],
+    "algorithms": [],
+    "olympiad": "OIJ",
+    "stage": 1,
+    "year": 2025,
+    "source": "Dev fixture",
+    "sourceUrl": "",
+    "explanationSource": "",
+    "type": "single",
+    "content": [
+      { "type": "text", "text": "Jaka wartość zostanie wypisana po wykonaniu poniższego kodu?" },
+      { "type": "code", "text": "x = 3\ny = x * 2 + 1\nprint(y)" }
+    ],
+    "options": ["6", "7", "8", "9"],
+    "correctAnswer": "7",
+    "points": 1,
+    "partialCredit": false,
+    "explanation": "x = 3, więc x * 2 = 6, a 6 + 1 = 7."
+  },
+  {
+    "id": 3,
+    "category": ["rekurencja"],
+    "algorithms": [],
+    "olympiad": "OIJ",
+    "stage": 1,
+    "year": 2025,
+    "source": "Dev fixture",
+    "sourceUrl": "",
+    "explanationSource": "",
+    "type": "single",
+    "content": [
+      { "type": "text", "text": "Ile wynosi f(4) dla poniższej funkcji rekurencyjnej?" },
+      { "type": "code", "text": "def f(n):\n    if n <= 1:\n        return 1\n    return n * f(n - 1)" }
+    ],
+    "options": ["4", "8", "24", "120"],
+    "correctAnswer": "24",
+    "points": 1,
+    "partialCredit": false,
+    "explanation": "Funkcja oblicza silnię. f(4) = 4 * f(3) = 4 * 3 * f(2) = 4 * 3 * 2 * f(1) = 4 * 3 * 2 * 1 = 24."
+  },
+  {
+    "id": 4,
+    "category": ["matematyka_dyskretna"],
+    "algorithms": [],
+    "olympiad": "OIJ",
+    "stage": 1,
+    "year": 2025,
+    "source": "Dev fixture",
+    "sourceUrl": "",
+    "explanationSource": "",
+    "type": "multi",
+    "content": [
+      { "type": "text", "text": "Zaznacz wszystkie liczby pierwsze spośród podanych." }
+    ],
+    "options": ["2", "4", "7", "9", "11", "15"],
+    "correctAnswer": ["2", "7", "11"],
+    "points": 2,
+    "partialCredit": true,
+    "explanation": "Liczby pierwsze to 2, 7 i 11. Liczba 4 = 2×2, 9 = 3×3, 15 = 3×5 — mają dzielniki inne niż 1 i one same."
+  },
+  {
+    "id": 5,
+    "category": ["systemy_liczbowe"],
+    "algorithms": [],
+    "olympiad": "OIJ",
+    "stage": 1,
+    "year": 2025,
+    "source": "Dev fixture",
+    "sourceUrl": "",
+    "explanationSource": "",
+    "type": "multi",
+    "content": [
+      { "type": "text", "text": "Które z poniższych zapisów binarnych odpowiadają liczbie dziesiętnej 5?" }
+    ],
+    "options": ["101", "011", "110", "0101"],
+    "correctAnswer": ["101", "0101"],
+    "points": 2,
+    "partialCredit": true,
+    "explanation": "5 w systemie binarnym to 101. Zapis 0101 to ta sama wartość z wiodącym zerem. 011 = 3, 110 = 6."
+  },
+  {
+    "id": 6,
+    "category": ["teoria_liczb"],
+    "algorithms": [],
+    "olympiad": "OIJ",
+    "stage": 1,
+    "year": 2025,
+    "source": "Dev fixture",
+    "sourceUrl": "",
+    "explanationSource": "",
+    "type": "short_answer",
+    "content": [
+      { "type": "text", "text": "Ile wynosi NWD(48, 36)?" }
+    ],
+    "options": [],
+    "correctAnswer": ["12"],
+    "points": 2,
+    "partialCredit": false,
+    "explanation": "48 = 2⁴ × 3, 36 = 2² × 3². NWD = 2² × 3 = 12. Algorytm Euklidesa: NWD(48, 36) = NWD(36, 12) = NWD(12, 0) = 12."
+  }
+]
