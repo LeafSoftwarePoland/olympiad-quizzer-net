@@ -12,7 +12,10 @@ What lives in `docs/` and how to maintain it.
 | Functionality registry | `docs/functionalities.md` | Registry of user-facing features with status and ADR pointers | See file header |
 | Glossary | `docs/Glossary.md` | Project-specific terms. Authoritative — do not duplicate in pipeline artifacts. | — |
 | Competition rules | `docs/rules/` | Machine-readable + human-readable competition rules per olympiad | `docs/rules/README.md` |
-| Architecture guide | `docs/architecture-guide.md` | Layer definitions, test levels, document hierarchy | This file |
+| Architecture guide | `docs/architecture-guide.md` | Layer definitions, test levels, document hierarchy | Self-describing |
+| Coding standards | `docs/standards/` | How code is written and reviewed. Enforced at every PR. | `docs/standards/INDEX.md` |
+
+`docs/standards/INDEX.md` is a **map, not a substitute** — anyone writing code reads every file it lists, in full.
 
 ## Hierarchy (no circular references)
 
@@ -34,8 +37,10 @@ Nothing should reference up to functionalities or rules from an ADR — that cre
 
 ### Amending an ADR
 1. Append `## Amendment — YYYY-MM-DD — one-line reason` to the ADR file.
-2. Update the "Last updated" line and amendment graph in `docs/adl/INDEX.md`.
+2. Update the "Last updated" line in `docs/adl/INDEX.md`, and the Status column if it changed.
 3. Never edit the original body.
+
+A new ADR beats an amendment when the decision reverses entirely, the technology changes, or the amendment would run longer than the original.
 
 ### Adding an integration doc
 1. Create `docs/integrations/<service>.md`.

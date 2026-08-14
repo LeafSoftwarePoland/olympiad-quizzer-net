@@ -1,0 +1,46 @@
+# ADR-026: Release versioning via git tags, auto patch bump
+
+**Status:** Accepted
+**Date:** 2026-08-13
+
+## Problem
+
+The version was a hand-edited file in the frontend's static assets. Nobody bumped it, so the displayed version lied. Wanted: three-segment versions from `1.0.0`, automatic patch bump on deploy, an option to name a version explicitly, and the version visible on the deploy run.
+
+Complication: the main branch forbids direct pushes (ADR-027), so anything that writes a version back into the repository must get past branch protection.
+
+## Considered
+
+- **Keep hand-editing the file** — zero machinery. Nobody does it, and a lying version is worse than none.
+- **Workflow commits the bumped file back to the main branch** — the file stays the single source of truth. Requires granting push-to-protected-branch rights to a manually triggered workflow in order to increment an integer. The blast radius of that permission dwarfs the benefit. Rejected.
+- **Version derived from commit SHA or build date** — free and always unique. Meaningless to a human reading a footer, and cannot express intent. Rejected as the primary scheme, retained as the backend's self-reported identity.
+- **Version from a git tag, bumped by the deploy workflow** — tags are not blocked by branch protection and need only content-write permission, and a tag is an immutable release marker for free.
+- **A versioning tool** — richer semantics, pre-release labels. A dependency and a config file for a two-deployable hobby project. Disproportionate.
+
+## Decision
+
+**Git tags are the source of truth. Two independent version lines, one per deployable, distinguished by tag prefix.**
+
+- Format `major.minor.patch`. First release `1.0.0`.
+- Each deploy workflow is manually triggered (ADR-015) and takes an optional version input:
+  - empty input, no prior tag → `1.0.0`
+  - empty input, prior tag exists → patch + 1
+  - input given → used as-is, after validating the three-segment format and rejecting a version whose tag already exists
+  - malformed input → the job fails before anything is built
+- The tag is pushed **after** a successful deploy, so a failed deploy consumes no version.
+- The frontend build writes both version values into a static version file at publish time. That file is generated, never committed.
+- The API cannot be versioned by the pipeline: the host builds the container from the repository itself in response to a trigger, so no build argument can be injected (ADR-005). The API therefore self-reports the **commit** supplied by the host's environment through its health endpoint, and the tag is the human-facing release label.
+
+Accepted cons:
+
+- Two version lines to reason about instead of one.
+- **The run title cannot carry an auto-bumped version.** The title is evaluated before any job runs, so job outputs are unavailable to it. The title uses the input when present and a stable placeholder otherwise; the resolved version goes to the run summary and becomes the pushed tag. No workaround produces a computed title.
+- **The displayed backend version can lag.** The frontend's version file records the latest backend tag at frontend build time; deploy the backend afterwards and the footer under-reports until the next frontend deploy. The alternative — querying the health endpoint on load — puts a cold-start-blocking request on the landing page for a cosmetic string. The health endpoint always reports the truth for anyone who needs it.
+- Deploy workflows need content-write permission to push tags. A smaller grant than branch push, but not nothing.
+- **No tag protection rule may be added**, or every deploy fails at its last step.
+
+## Remarks / Sources
+
+- ADR-027 (branch protection — the constraint that rules out commit-back, and why no tag ruleset exists), ADR-015 (deploys are manual), ADR-005 (the host builds its own image)
+- Run-title contexts: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#run-name
+- Revisit if pre-release or preview channels are ever wanted — that is where a versioning tool starts paying for itself.

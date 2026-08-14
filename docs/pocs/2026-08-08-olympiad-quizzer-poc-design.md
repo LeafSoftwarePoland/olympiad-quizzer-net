@@ -60,7 +60,7 @@ Stateless. No database in POC. Questions hardcoded in API.
 
 ## Question schema
 
-JSON keys: **camelCase**. Full schema in ADR-011.
+JSON keys: **camelCase**. Full schema in ADR-007.
 
 ```json
 {
@@ -223,19 +223,19 @@ jobs:
 
 **Issues found (all fixed):**
 
-1. **Bootstrap CDN class conflict** — Bootstrap defines `.progress { height:1rem; background:#e9ecef }` which overwrote our `.progress` text counter with a white bar. Fix: removed Bootstrap CDN entirely, renamed class to `.quiz-progress`, added custom fieldset reset (Bootstrap had provided it implicitly). → ADR-023.
+1. **Bootstrap CDN class conflict** — Bootstrap defines `.progress { height:1rem; background:#e9ecef }` which overwrote our `.progress` text counter with a white bar. Fix: removed Bootstrap CDN entirely, renamed class to `.quiz-progress`, added custom fieldset reset (Bootstrap had provided it implicitly). → ADR-014.
 
 2. **Mock option strings "A","B","C","D"** — `questions.json` had single-letter option strings; rendered as "A A", "B B". Fix: renamed options to descriptive text. Not a schema bug — just misleading POC data.
 
-3. **`Nav.NavigateTo("/")`** — Navigates to domain root (`https://leafsoftwarepoland.github.io/`) not app base on GitHub Pages. Fix: `Nav.NavigateTo(Nav.BaseUri)` in `Result.razor`. → Added to ADR-001 amendment.
+3. **`Nav.NavigateTo("/")`** — Navigates to domain root (`https://leafsoftwarepoland.github.io/`) not app base on GitHub Pages. Fix: `Nav.NavigateTo(Nav.BaseUri)` in `Result.razor`. → ADR-001.
 
-4. **Sticky footer on Blazor** — `display:flex` on `body` doesn't work because Blazor renders into `div#app` inside body, not directly into body. `main` is a child of `#app`, not `body`. Fix: flex on `#app`, not `body`. → Added to ADR-001 amendment.
+4. **Sticky footer on Blazor** — `display:flex` on `body` doesn't work because Blazor renders into `div#app` inside body, not directly into body. `main` is a child of `#app`, not `body`. Fix: flex on `#app`, not `body`. → ADR-001.
 
 5. **`GetFromJsonAsync` silent fail** — `Http.GetFromJsonAsync<JsonElement>()` for `version.json` could silently fail during init. Fix: `Http.GetAsync` + `ReadAsStringAsync` + `JsonDocument.Parse` + explicit status check.
 
-6. **deploy-frontend push trigger** — Original design had auto-deploy on `source/client/**` push. User wants manual control. Fix: removed push trigger, `workflow_dispatch` only. → ADR-024.
+6. **deploy-frontend push trigger** — Original design had auto-deploy on `source/client/**` push. User wants manual control. Fix: removed push trigger, `workflow_dispatch` only. → ADR-015.
 
-7. **CI `setup-dotnet` step** — Runner service account has no write access to `C:\Program Files\dotnet`. Step redundant (SDK installed globally). Fix: removed. → Added to ADR-006 amendment.
+7. **CI `setup-dotnet` step** — Runner service account has no write access to `C:\Program Files\dotnet`. Step redundant (SDK installed globally). Fix: removed. → ADR-004.
 
 8. **CI `build-docker` job** — Docker Desktop not running on runner (no docker API). Dockerfile is exercised on every Render.com deploy; CI duplicate adds no signal. Fix: removed job.
 

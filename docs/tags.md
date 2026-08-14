@@ -7,7 +7,7 @@ Standardized tags for the question bank. All tags are strings. Multi-value where
 Tags use Polish words, Latin characters only. Drop diacritics: ą→a, ę→e, ó→o, ś→s, ł→l, ź/ż→z, ć→c, ń→n.
 Example: `złożoność` → `zlozonosc`, `śledzenie` → `sledzenie`.
 
-This is an explicit exception to ADR-019 (which requires English for machine identifiers). Tag vocabulary is human-facing Polish domain concepts — English equivalents would be less recognizable to Polish educators. Documented in ADR-019 amendment.
+This is an explicit exception to ADR-012 (which requires English for machine identifiers). Tag vocabulary is human-facing Polish domain concepts — English equivalents would be less recognizable to Polish educators. Documented in ADR-012.
 
 ---
 

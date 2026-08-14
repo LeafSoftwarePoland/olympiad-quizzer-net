@@ -6,76 +6,84 @@ General architecture rules for this repo. Supplements the ADL — does not repla
 
 **Clean Architecture / Onion Architecture.**
 
-Dependency direction: inner layers know nothing about outer layers.
+Dependency direction: inner layers know nothing about outer layers. The reference graph enforces
+it, so a violation is a compile error rather than a review finding (ADR-023).
 
 | Layer | Project | Contents | Rules |
 |---|---|---|---|
-| Domain | `Core/olympiad-quizzer-net.Core.Domain` | `Question`, `ContentBlock`, `QuestionType`, `Grader`, `SubmittedAnswer`, `GradeResult`, `QuestionQuery`, `FilterOptions`, `IQuestionRepository`, `QuizSessionState` + session logic, `JsonOptions` | References **nothing**. No I/O, no HTTP, no DI, no logging. One bounded exception: `System.Text.Json` in `Domain/Serialization` (ADR-032). |
-| Infrastructure | `Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite` | `JsonQuestionRepository`, `QuestionBankLoader`, `IShuffler`, DI extension | References Domain only. Named for its destination (SQLite, ADR-004); JSON reading is the current stub. |
-| Application / API | `App/olympiad-quizzer-net.App.API` | `Program` (class-based), endpoints under `Endpoints/`, startup extensions under `Extensions/`, Dockerfile | References Domain + Infrastructure. Stateless, read-only. |
-| Presentation / Client | `App/olympiad-quizzer-net.App.Client` | Blazor WASM, feature folders, `ApiQuestionRepository`, localStorage services | References Domain only. HTTP is the Client's own infrastructure boundary. |
-| Tests — L0 | `Core/olympiad-quizzer-net.Core.Domain.L0` | Domain unit tests | References Domain only. Cannot touch the filesystem — enforced by the project graph. |
-| Tests — L1 | `App/olympiad-quizzer-net.App.API.L1` | Repository against real JSON; API via `WebApplicationFactory`; real-bank integrity suite | References Domain + Infrastructure + API. |
+| Domain | `Core/olympiad-quizzer-net.Core.Domain` | question and answer types, grader, query and filter types, repository abstraction, session state and logic, serialization contract | References **nothing** — no project references, no package references. No I/O, no HTTP, no DI, no logging. One bounded exception: the platform JSON serializer in `Domain/Serialization` (ADR-023). |
+| Test support | `Core/olympiad-quizzer-net.Core.Tests.Common` | tier constants, shared builders, fixtures, capturing loggers | References Domain. Used by two or more test projects. Ships nothing, carries no tier. |
+| Infrastructure | `Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite` | question storage, filtering, shuffling, DI extension | References Domain only. Reads `data/questions.db` with Dapper (ADR-029). |
+| Application / API | `App/olympiad-quizzer-net.App.API` | `Program` (class-based, non-partial), controllers under `Controllers/`, startup extensions under `Extensions/`, Dockerfile | References Domain + Infrastructure. Stateless, read-only (ADR-013). |
+| Presentation / Client | `App/olympiad-quizzer-net.App.Client` | Blazor WASM, feature folders, HTTP repository implementation, browser-storage services | References Domain only. HTTP is the Client's own infrastructure boundary. |
+| Tests — Domain L0 | `Core/olympiad-quizzer-net.Core.Domain.L0` | Domain unit tests | References Domain + Tests.Common. Cannot touch the filesystem — enforced by the project graph. |
+| Tests — Infrastructure L1 | `Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite.L1` | storage tests against a real database file | References Domain + Infrastructure + Tests.Common. |
+| Tests — API L1 | `App/olympiad-quizzer-net.App.API.L1` | controller tests, hand-constructed | References Domain + Infrastructure + API + Tests.Common. |
 
-Full structure, reference graph and exact `.csproj` settings: see the v1.0 solution design.
-Code conventions: `docs/coding-standards.md`.
+Reference graph, `.csproj` settings and the naming rule: [standards/projects-and-solution.md](standards/projects-and-solution.md).
+All code conventions: [standards/INDEX.md](standards/INDEX.md) — read every file it lists.
 
-ADRs are the authoritative record of architectural decisions. When code and an ADR conflict, the ADR is wrong — fix the ADR (amendment), then decide whether to fix the code.
+**Precedence, in order:** coding standards → ADRs → code. The standards say how things are
+written; ADRs say what was decided and why; the code is the result. When the code conflicts with
+an ADR, exactly one of them is wrong — decide which, deliberately. Do not assume the code is
+right because it exists, and do not assume the ADR is right because it is written down.
 
 ## Test levels
 
-Illustrative definitions for this project. Tooling may change — the intent does not.
+Defined authoritatively in [standards/testing-tiers.md](standards/testing-tiers.md). Restated
+here for orientation only; where the two disagree, the standards win.
 
-| Level | Scope | Project | Tooling |
-|---|---|---|---|
-| L0 — Unit | Single class or method. Hand-authored objects. No I/O, no HTTP, no DI. | `Core/olympiad-quizzer-net.Core.Domain.L0` | xUnit 2.9 + `Microsoft.NET.Test.Sdk` |
-| L1 — In-app integration | Multiple real classes in one process: repository + real JSON file, API + real DI via in-memory test host. Only the shuffler (seeded) and loggers are substituted. | `App/olympiad-quizzer-net.App.API.L1` | xUnit + `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`) |
-| L2 — Out-app integration | Real process, real external dependencies, spun up and torn down on demand (Docker). | *not created* | undecided — Docker + xUnit is the intent |
-| L3 — E2E / UI | Browser-driven. Real frontend against a real or stubbed backend. | *not created* | undecided — Playwright is the intent |
+| Level | Scope | Project |
+|---|---|---|
+| L0 — unit | One class or method. Every collaborator substituted. No filesystem, network, DI or host. | `Core/olympiad-quizzer-net.Core.Domain.L0` |
+| L1 — in-app integration | Subject constructed **by hand** with real in-app layers over a real external. No `WebApplicationFactory`, no DI container, no middleware, no routing. | `Infrastructure/…SQLite.L1`, `App/…App.API.L1` |
+| L2 — full application | Whole app built with real registrations and the real middleware pipeline, driven over HTTP. | *not created* |
+| L3 — end-to-end | Browser-driven against a real backend. | *not created* |
 
-Both test projects are in `OlympiadQuizzer.slnx`, so `dotnet test OlympiadQuizzer.slnx` runs
-L0 and L1 in one invocation and CI needs no per-project step.
+L2 and L3 are **deliberately not created**. Do not tag anything with them, and do not reach for a
+test host because it is convenient — a `WebApplicationFactory` in an L1 project is a defect.
 
-Current state (v1.0): L0 and L1 implemented. L2 and L3 deliberately not created — see the
-v1.0 test strategy for what that leaves uncovered and what would trigger adding them.
+Every test project is in `OlympiadQuizzer.slnx`, so `dotnet test OlympiadQuizzer.slnx` runs every
+level in one invocation and CI needs no per-project step.
 
-**Real-data validation.** The real `questions.json` is an L1 fixture, not just production
-data: an integrity suite asserts the schema invariants the type system cannot express
-(mandatory `category[]`, answers existing among `options`, mandatory image `alt`, tag values
-drawn from `docs/tags.md`). It re-runs on every bank refresh, followed by a manual
-spot-check — an invariant cannot catch an answer that is simply mis-transcribed.
+**Real-data validation.** The real question bank is an L1 fixture, not just production data. An
+integrity suite asserts the invariants the type system cannot express — mandatory `category[]`,
+every stored answer existing among `options` after normalisation, mandatory image `alt`, tag
+values drawn from `docs/tags.md` — and CI additionally asserts that the committed database was
+regenerated from the committed JSON (ADR-029). It re-runs on every bank refresh, followed by a
+manual spot-check: an invariant cannot catch an answer that is simply mis-transcribed.
 
 ## Document types in this repo
 
 | Type | Location | Schema ref |
 |---|---|---|
 | ADR | `docs/adl/` | `docs/adl/ADR-SCHEMA.md` |
+| Coding standards | `docs/standards/` | `docs/standards/INDEX.md` |
 | Integration doc | `docs/integrations/` | `docs/integrations/INDEX.md` |
 | POC doc | `docs/pocs/` | Standalone — no fixed schema |
 | Functionality registry | `docs/functionalities.md` | See file header |
 | Glossary | `docs/Glossary.md` | — |
 | Competition rules | `docs/rules/` | `docs/rules/README.md` |
 | Architecture guide | `docs/architecture-guide.md` | This file |
-| Coding standards | `docs/coding-standards.md` | See file header |
 
 **Hierarchy (no circular references):**
+
 - POC docs are standalone.
-- ADRs can reference POC docs.
-- Everything else (architecture guide, functionalities, rules, integrations) can reference ADRs.
-- Nothing references up to functionalities or rules (no circular deps).
+- ADRs may reference POC docs and the standards.
+- Everything else (architecture guide, functionalities, rules, integrations) may reference ADRs.
+- Nothing references up to functionalities or rules.
+- **Nothing committed may reference a `.pipeline/` path** — that folder is gitignored and
+  deletable by design, so any such link is a dangling reference waiting to happen.
 
-## ADR amendment rules
-
-See `docs/adl/INDEX.md` header and `docs/adl/ADR-SCHEMA.md`.
-
-Short form: append `## Amendment — YYYY-MM-DD — reason` at the end of the file. Never edit the original body.
-
-## Standing hygiene rule
+## ADR hygiene
 
 Whenever an ADR is added:
+
 - Track it in git in the same commit.
 - Add it to `docs/adl/INDEX.md` in the same commit.
 
-Same applies to integration docs (`docs/integrations/INDEX.md`) and new competition rules files (`docs/rules/README.md` or a pointer).
+To change one, append `## Amendment — YYYY-MM-DD — reason`. Never edit the original body. Full
+rules in `docs/adl/ADR-SCHEMA.md` and [standards/process.md](standards/process.md).
 
-No orphaned docs.
+Same hygiene applies to integration docs (`docs/integrations/INDEX.md`) and competition rules
+(`docs/rules/README.md`). No orphaned docs.

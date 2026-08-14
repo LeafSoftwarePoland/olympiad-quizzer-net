@@ -2,7 +2,7 @@
 
 Polish quiz app for the OIJ (Olimpiada Informatyczna Juniorów) — built for a child preparing for the national junior informatics olympiad.
 
-**Tech stack:** Blazor WASM (.NET 10) frontend + ASP.NET Core API backend. Custom CSS, no frameworks. Deployed on GitHub Pages (frontend) and Render.com (API).
+**Tech stack:** Blazor WASM (.NET 10) frontend + ASP.NET Core API backend. SQLite question store read with Dapper. Custom CSS, no frameworks. Deployed on GitHub Pages (frontend) and Render.com (API).
 
 ## Why it exists
 
@@ -18,14 +18,14 @@ The OIJ publishes past exam questions as PDFs. There is no interactive practice 
 dotnet run --project source/App/olympiad-quizzer-net.App.API
 ```
 
-The API listens on `http://localhost:10000` by default. Endpoints: `GET /healthz`, `GET /api/filters`, `GET /api/questions`.
+The API listens on `http://localhost:10000` by default. Routes: `GET /healthz`, `GET /v1/filters`, `GET /v1/questions`.
 
-In development mode (the default for `dotnet run`), the API automatically loads `appsettings.Development.json`, which points at a small 6-question fixture (`Data/dev-questions.json`) instead of the full bank. This keeps startup fast and covers all three question types — single choice, multiple choice, and short answer.
+In development mode (the default for `dotnet run`), the API loads `appsettings.Development.json`, which points at a small 6-question dev bank inside the API project instead of the full production bank. Keeps startup fast and covers all three live question types — single choice, multiple choice, short answer.
 
-To use the full question bank locally, delete or rename `appsettings.Development.json`, or override the path with an absolute path (relative paths resolve against the build output directory, not the repo root):
+To use the full bank locally, delete or rename `appsettings.Development.json`, or override the path (relative paths resolve against the build output directory, not the repo root):
 
 ```
-dotnet run --project source/App/olympiad-quizzer-net.App.API -- --QuestionBank:FilePath="$(pwd)/data/questions.json"
+dotnet run --project source/App/olympiad-quizzer-net.App.API -- --QuestionBank:FilePath="$(pwd)/data/questions.db"
 ```
 
 **2. Run the frontend**
@@ -42,40 +42,41 @@ Opens at `http://localhost:<port>`. The frontend reads `wwwroot/appsettings.json
 dotnet test OlympiadQuizzer.slnx -c Release
 ```
 
-L0 (unit) and L1 (integration) tests. L1 tests include bank integrity checks that run against `data/questions.json`; all other tests use their own fixture files.
+Runs L0 (unit) and L1 (integration) in one invocation. L1 includes bank-integrity checks against the real bank in `data/`, and asserts that the committed database was regenerated from the committed JSON. All other tests use their own fixture files.
 
-## Dev fixture
+## The question bank
 
-`source/App/olympiad-quizzer-net.App.API/Data/dev-questions.json` — 6 questions:
+`data/` holds both artefacts, and both are committed:
 
-| # | Type | Topic |
-|---|---|---|
-| 1 | single | Python `def` keyword |
-| 2 | single | Code tracing — arithmetic expression |
-| 3 | single | Recursion — factorial |
-| 4 | multi | Prime numbers (partial credit) |
-| 5 | multi | Binary representation (partial credit) |
-| 6 | short\_answer | GCD (NWD) calculation |
+| File | Role |
+|---|---|
+| `data/questions.json` | **Authored source of truth.** Hand-edited, diff-reviewable. What a content PR is reviewed against. |
+| `data/questions.db` | **Generated SQLite bank.** What the API actually reads. |
+| `data/images/` | Question images, named after the question `id`. |
+
+A content change edits the JSON and regenerates the database in the same commit. The sync is reconciling — it reports added, changed and removed questions by `id`, and that report is how a binary artefact stays reviewable. CI fails if the two disagree. See [ADR-029](docs/adl/ADR-029-question-storage-sqlite.md).
 
 ## Project structure
 
 ```
-data/                                   — production question bank (questions.json + images/)
+data/                                       — question bank: questions.json, questions.db, images/
 source/
   Core/
-    olympiad-quizzer-net.Core.Domain/      — domain types, grader, session logic, IQuestionRepository
-    olympiad-quizzer-net.Core.Domain.L0/   — domain unit tests (xUnit)
-    olympiad-quizzer-net.Core.Tests.Common/ — shared test constants
+    olympiad-quizzer-net.Core.Domain/         — domain types, grader, session logic, repository abstraction
+    olympiad-quizzer-net.Core.Domain.L0/      — domain unit tests (xUnit)
+    olympiad-quizzer-net.Core.Tests.Common/   — shared test constants, builders, fixtures
   Infrastructure/
-    olympiad-quizzer-net.Infrastructure.SQLite/ — JSON question bank loader, filtering, shuffling
+    olympiad-quizzer-net.Infrastructure.SQLite/    — SQLite store, filtering, shuffling, DI extension
+    olympiad-quizzer-net.Infrastructure.SQLite.L1/ — storage tests against a real database file
   App/
-    olympiad-quizzer-net.App.API/          — ASP.NET Core minimal API, Endpoints/, Extensions/, Dockerfile
-    olympiad-quizzer-net.App.Client/       — Blazor WASM frontend, feature folders
-    olympiad-quizzer-net.App.API.L1/       — integration tests via WebApplicationFactory (xUnit)
+    olympiad-quizzer-net.App.API/             — ASP.NET Core API, Controllers/, Extensions/, Dockerfile
+    olympiad-quizzer-net.App.Client/          — Blazor WASM frontend, feature folders
+    olympiad-quizzer-net.App.API.L1/          — controller tests, hand-constructed (no test host)
 docs/
   adl/          — Architecture Decision Log
-  integrations/ — GitHub Pages, Render.com, GitHub Actions documentation
-  rules/        — Competition rules (machine-readable)
+  standards/    — coding standards; read every file
+  integrations/ — GitHub Pages, Render.com, GitHub Actions
+  rules/        — competition rules (machine-readable)
 .github/workflows/ — ci.yml, deploy-backend.yml, deploy-frontend.yml
 ```
 
@@ -91,8 +92,11 @@ Both deploys are **manual** (`workflow_dispatch`) — no automatic deploys on pu
 Live frontend: `https://leafsoftwarepoland.github.io/olympiad-quizzer-net/`
 Live API: `https://olympiad-quizzer-net-api.onrender.com`
 
+A content-only change still needs a backend deploy — the bank ships inside the container image.
+
 ## Documentation
 
+- [Coding standards](docs/standards/INDEX.md) — read every file listed, in full, before writing code
 - [Architecture Decision Log](docs/adl/INDEX.md) — all architectural decisions
 - [Architecture guide](docs/architecture-guide.md) — layer rules, test levels, document types
 - [Integrations](docs/integrations/INDEX.md) — GitHub Pages, Render.com, GitHub Actions

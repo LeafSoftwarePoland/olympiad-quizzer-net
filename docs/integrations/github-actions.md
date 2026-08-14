@@ -31,7 +31,7 @@ Both `build` and `deploy` jobs in `deploy-frontend.yml` run on `ubuntu-latest`, 
 
 **Reason**: `actions/upload-pages-artifact` calls `tar --hard-dereference`, which `bsdtar` (Git Bash on Windows) does not support. Running on GitHub-hosted Ubuntu avoids this entirely.
 
-**Tech debt**: the intent was to use the self-hosted runner for all jobs. Moving to `ubuntu-latest` is a workaround, not the target state. Tracked in ADR-026.
+**Provisional, and not tech debt either**: ADR-017 rejects the PATH-reordering workaround on the self-hosted machine — that fix lives in undiffable machine state and can vanish on reboot, so it stays rejected regardless. The target is still one machine running everything, which needs the local toolchain (Docker, WSL) fixed first. Whether that happens or hosted minutes prove sufficient is the open question in ADR-017.
 
 Public repo = GitHub-hosted runners are free. No minute budget concern.
 
@@ -68,19 +68,19 @@ All actions are pinned to full `vX.Y.Z` tags (not floating `@vX`):
 | `actions/upload-pages-artifact` | `v5.0.0` |
 | `actions/deploy-pages` | `v5.0.0` |
 
-See A-04 in `.pipeline/1-architecture/assumptions.md` — version tags were ambiguous during setup; pinned to verified values.
+Pinned to exact patch versions, not floating majors. Reason: the published tags for these actions were ambiguous during setup — a major-only tag resolved differently than the docs implied — so each value above was verified against a real run before being pinned. Re-verify on bump; do not float.
 
 ## Gotchas
 
 - **Runner offline**: all `self-hosted` jobs block silently. Check if the Dell Latitude is on and the runner service is running.
 - **Docker on self-hosted**: not available. `build-docker` job is intentionally omitted from `ci.yml`. Render deploy exercises the Dockerfile.
 - **setup-dotnet on self-hosted**: removed from `ci.yml` because the action needs write access to `C:\Program Files\dotnet`. SDK is pre-installed globally.
-- **tar/bsdtar on self-hosted Windows**: blocks `upload-pages-artifact`. Solved by running frontend deploy on `ubuntu-latest`. See ADR-026.
+- **tar/bsdtar on self-hosted Windows**: blocks `upload-pages-artifact`. Solved by running frontend deploy on `ubuntu-latest`. See ADR-017.
 
 ## Links
 
-- ADR-006 (GitHub Pages): `docs/adl/ADR-006-github-pages-hosting.md`
-- ADR-007 (Render.com): `docs/adl/ADR-007-render-com-api-hosting.md`
-- ADR-024 (manual-only frontend deploy): `docs/adl/ADR-024-deploy-frontend-manual-only.md`
-- ADR-026 (tar/bsdtar shell): `docs/adl/ADR-026-self-hosted-runner-tar-workaround.md`
+- ADR-004 (GitHub Pages): `docs/adl/ADR-004-github-pages-hosting.md`
+- ADR-005 (Render.com): `docs/adl/ADR-005-render-com-api-hosting.md`
+- ADR-015 (manual-only frontend deploy): `docs/adl/ADR-015-frontend-deploy-manual-only.md`
+- ADR-017 (runner allocation): `docs/adl/ADR-017-runner-allocation.md`
 - Workflows: `.github/workflows/`

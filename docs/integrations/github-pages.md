@@ -2,13 +2,13 @@
 
 ## What it is / why we use it
 
-GitHub Pages hosts the Blazor WASM frontend as a static site, served from the `leafsoftwarepoland/olympiad-quizzer-net` repo. Chosen because it is free permanently, CDN-backed, and requires no card. See ADR-006 for the full platform comparison.
+GitHub Pages hosts the Blazor WASM frontend as a static site, served from the `leafsoftwarepoland/olympiad-quizzer-net` repo. Chosen because it is free permanently, CDN-backed, and requires no card. See ADR-004 for the full platform comparison.
 
 Live frontend: `https://leafsoftwarepoland.github.io/olympiad-quizzer-net/`
 
 ## How deployment works
 
-Deploy is manual only (`workflow_dispatch`). No push trigger — see ADR-024.
+Deploy is manual only (`workflow_dispatch`). No push trigger — see ADR-015.
 
 The `deploy-frontend.yml` workflow runs two jobs:
 
@@ -47,11 +47,11 @@ No deploy hook — GitHub Pages deploy is fully managed by the Actions workflow 
 
 - **Base href**: must be `/olympiad-quizzer-net/` with trailing slash. Without the slash, Blazor Router 404s on direct URL access (e.g. refresh on a non-root route).
 - **404.html**: GitHub Pages serves `404.html` when a path is not found. Copying `index.html` to `404.html` lets Blazor Router handle client-side routing after the initial load.
-- **`.nojekyll`**: when Pages source is "GitHub Actions", Jekyll does not run — but the file is harmless and Microsoft guidance still recommends it. See A-06 in assumptions.
-- **Self-hosted runner**: `upload-pages-artifact` calls `tar --hard-dereference`, which fails on the self-hosted Windows runner (bsdtar). Both jobs run on `ubuntu-latest` to avoid this. Tech debt: see ADR-026.
+- **`.nojekyll`**: when the Pages source is "GitHub Actions", Jekyll does not run, so the file is strictly unnecessary — but it is a zero-byte file, Microsoft guidance still recommends it, and it becomes load-bearing again the moment the Pages source is switched back to a branch. Kept deliberately; do not "clean up".
+- **Runner choice**: `upload-pages-artifact` calls `tar --hard-dereference`, which fails on the self-hosted Windows runner (bsdtar). All frontend deploy jobs therefore run on `ubuntu-latest`. Provisional allocation; overall runner strategy is open — see ADR-017.
 - **setup-dotnet on self-hosted**: would fail (no write access to `C:\Program Files\dotnet`). Irrelevant here since both jobs run on `ubuntu-latest`, but noted for CI (`ci.yml` omits setup-dotnet on self-hosted).
-- **Fingerprinting**: `<CompressionEnabled>false</CompressionEnabled>` is set in the client project to avoid a .NET 10 WASM fingerprinting defect. See ADR-027.
-- **Manual deploy only**: push to `main` does NOT trigger a frontend deploy. See ADR-024.
+- **Fingerprinting**: `<CompressionEnabled>false</CompressionEnabled>` is set in the client project to avoid a .NET 10 WASM fingerprinting defect. See ADR-018.
+- **Manual deploy only**: push to `main` does NOT trigger a frontend deploy. See ADR-015.
 
 ## Org-level robots.txt (one-time setup)
 
@@ -80,6 +80,6 @@ Note: expand the `Disallow` list here whenever new app paths should be excluded 
 ## Links
 
 - Live URL: `https://leafsoftwarepoland.github.io/olympiad-quizzer-net/`
-- ADR-006 (platform decision): `docs/adl/ADR-006-github-pages-hosting.md`
-- ADR-024 (manual-only deploy): `docs/adl/ADR-024-deploy-frontend-manual-only.md`
+- ADR-004 (platform decision): `docs/adl/ADR-004-github-pages-hosting.md`
+- ADR-015 (manual-only deploy): `docs/adl/ADR-015-frontend-deploy-manual-only.md`
 - Deploy workflow: `.github/workflows/deploy-frontend.yml`

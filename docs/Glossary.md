@@ -1,6 +1,6 @@
 # Glossary
 
-Project-specific terms. The `docs/` glossary is the authoritative reference. `.pipeline/GLOSSARY.md` is a pipeline-only artifact — do not merge.
+Project-specific terms. The `docs/` glossary is the authoritative reference. Do not duplicate it in pipeline artifacts.
 
 | Term | Full form | Explanation |
 |------|-----------|-------------|

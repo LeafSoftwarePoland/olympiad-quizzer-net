@@ -1,86 +1,70 @@
 # Architecture Decision Log
 
-Last updated: 2026-08-14 (PR #2 structural feedback: ADR-039..041 added; amendment to ADR-033)
+Last updated: 2026-08-14 — full cleanup. Bodies rewritten, amendments folded in, dead decisions deleted, log renumbered with no gaps. From this point on, amendments resume as the normal way to change an ADR.
 
-## How to amend an ADR
+## How to change an ADR
 
-Append `## Amendment — YYYY-MM-DD — one-line reason` to existing file. State `**Overrides:** <section>` for anything that changes; `**Adds:** <topic>` for net-new facts. Write caveman-terse — one line per point. Never edit original decision body. Multiple amendments = multiple sections, newest last.
+Append `## Amendment — YYYY-MM-DD — one-line reason`. State `**Overrides:** <section>` for anything that changes existing text, `**Adds:** <topic>` for net-new facts. Caveman-terse, one line per point. **Never edit the original decision body.** Multiple amendments are multiple sections, newest last.
 
-New ADR > amendment when: decision reverses entirely, new technology, or amendment length exceeds original.
+New ADR beats amendment when the decision reverses entirely, the technology changes, or the amendment would be longer than the original.
+
+Full template and rules: [ADR-SCHEMA.md](ADR-SCHEMA.md).
+
+## Content rule
+
+ADRs state **WHAT** was decided and **WHY** — not **HOW**. No class, method, interface or property names; no code listings of production types; no project-file snippets. Paths, external URLs, secret names, configuration keys and wire-format field names are allowed. Implementation detail belongs in the design document; enforcement detail belongs in `docs/standards/`. Where an ADR and the coding standards disagree, **the standards win**.
+
+## Log
 
 | ADR | Title | Status | Date |
 |---|---|---|---|
 | [ADR-001](ADR-001-blazor-wasm-frontend.md) | Blazor WASM as frontend framework | Accepted | 2026-08-08 |
-| [ADR-002](ADR-002-no-backend-phase1.md) | No backend in Phase 1 — static JSON | Superseded for question delivery | 2026-08-08 |
-| [ADR-003](ADR-003-question-repository-interface.md) | IQuestionRepository abstraction | Accepted | 2026-08-08 |
-| [ADR-004](ADR-004-dapper-over-ef-core.md) | Dapper over EF Core | Accepted | 2026-08-08 |
-| [ADR-005](ADR-005-single-unified-app.md) | Single app for OIJ + voivodeship konkursy | Accepted | 2026-08-08 |
-| [ADR-006](ADR-006-github-pages-hosting.md) | GitHub Pages for WASM static hosting | Accepted | 2026-08-08 |
-| [ADR-007](ADR-007-render-com-api-hosting.md) | Render.com for Phase 2 API hosting | Accepted | 2026-08-08 |
-| [ADR-008](ADR-008-oracle-cloud-deferred.md) | Oracle Cloud Always Free — deferred | Deferred | 2026-08-08 |
-| [ADR-009](ADR-009-versioned-static-json-questions.md) | Questions as versioned static JSON | Superseded for question delivery | 2026-08-08 |
-| [ADR-010](ADR-010-images-static-lazy-loaded.md) | Images as static lazy-loaded files | Accepted | 2026-08-08 |
-| [ADR-011](ADR-011-unified-question-schema.md) | Unified question schema | Accepted | 2026-08-08 |
-| [ADR-012](ADR-012-explanation-source-per-question.md) | source_urls[] + explanation ContentBlocks per question | Accepted | 2026-08-08 |
-| [ADR-013](ADR-013-excluded-paid-sources.md) | Excluded sources — private/paid olympiads | Accepted | 2026-08-08 |
-| [ADR-014](ADR-014-excluded-programming-competitions.md) | Excluded competition types — pure programming | Accepted | 2026-08-08 |
-| [ADR-015](ADR-015-no-accounts-phase1.md) | No user accounts in Phase 1 | Accepted | 2026-08-08 |
-| [ADR-016](ADR-016-responsive-design.md) | Responsive design — mobile/tablet/desktop | Accepted | 2026-08-08 |
-| [ADR-017](ADR-017-aria-accessibility-upfront.md) | ARIA accessibility built upfront | Accepted | 2026-08-08 |
-| [ADR-018](ADR-018-pwa-deferred.md) | PWA / Service Worker — deferred | Deferred | 2026-08-08 |
-| [ADR-019](ADR-019-language-policy.md) | Language policy | Accepted | 2026-08-08 |
-| [ADR-020](ADR-020-poc-ships-thin-api.md) | POC ships a thin API (amends ADR-002) | Accepted | 2026-08-08 |
-| [ADR-021](ADR-021-shared-class-library.md) | Shared class library for models and grader | Accepted | 2026-08-08 |
-| [ADR-022](ADR-022-poc-schema-field-bindings.md) | POC schema field bindings and answer semantics (clarifies ADR-011) | Accepted | 2026-08-08 |
-| [ADR-023](ADR-023-no-css-framework.md) | Custom CSS only — no Bootstrap or utility framework | Accepted | 2026-08-09 |
-| [ADR-024](ADR-024-deploy-frontend-manual-only.md) | deploy-frontend manual-only (workflow_dispatch) | Accepted | 2026-08-09 |
-| [ADR-025](ADR-025-localstorage-quiz-session.md) | Quiz session persisted in localStorage | Accepted | 2026-08-12 |
-| [ADR-026](ADR-026-self-hosted-runner-tar-workaround.md) | Self-hosted Windows runner — tar/bsdtar PATH workaround | Shell | 2026-08-12 |
-| [ADR-027](ADR-027-dotnet10-wasm-fingerprinting-pages.md) | .NET 10 WASM asset fingerprinting on GitHub Pages | Shell | 2026-08-12 |
-| [ADR-028](ADR-028-client-http-timeout-render-coldstart.md) | Client HTTP timeout for Render cold start | Shell | 2026-08-12 |
-| [ADR-029](ADR-029-scalability-posture.md) | Scalability posture — one concurrent user | Shell | 2026-08-12 |
-| [ADR-030](ADR-030-progress-tracking-browser-side.md) | Progress and history tracking — browser-side, lost on cache clear | Shell | 2026-08-12 |
-| [ADR-031](ADR-031-blazor-feature-folders.md) | Blazor WASM feature-based folder structure | Accepted | 2026-08-13 |
-| [ADR-032](ADR-032-onion-solution-layout.md) | Onion solution layout — Core / Infrastructure / App | Accepted | 2026-08-13 |
-| [ADR-033](ADR-033-csharp-language-posture.md) | C# language posture — nullable disabled, no top-level statements | Accepted | 2026-08-13 |
-| [ADR-034](ADR-034-value-based-answers.md) | Answers are values, not option indices | Accepted | 2026-08-13 |
-| [ADR-035](ADR-035-questions-filter-endpoint-contract.md) | Question filtering endpoint contract | Accepted | 2026-08-13 |
-| [ADR-036](ADR-036-versioning-via-git-tags.md) | Release versioning via git tags, auto patch bump | Accepted | 2026-08-13 |
-| [ADR-037](ADR-037-main-branch-protection.md) | Protected `main` with a required CI check | Accepted | 2026-08-13 |
-| [ADR-038](ADR-038-robots-txt-two-origins.md) | Crawler control across two origins | Accepted | 2026-08-13 |
-| [ADR-039](ADR-039-project-naming-convention.md) | Project and solution naming convention | Accepted | 2026-08-14 |
-| [ADR-040](ADR-040-question-bank-data-location.md) | Question bank data lives outside the API project | Accepted | 2026-08-14 |
-| [ADR-041](ADR-041-api-endpoint-structure.md) | API endpoints and startup composition outside the entry point | Accepted | 2026-08-14 |
+| [ADR-002](ADR-002-question-repository-abstraction.md) | Question repository abstraction | Accepted | 2026-08-08 |
+| [ADR-003](ADR-003-single-unified-app.md) | Single unified app for OIJ and voivodeship konkursy | Accepted | 2026-08-08 |
+| [ADR-004](ADR-004-github-pages-hosting.md) | GitHub Pages for WASM static hosting | Accepted | 2026-08-08 |
+| [ADR-005](ADR-005-render-com-api-hosting.md) | Render.com for API hosting | Accepted | 2026-08-08 |
+| [ADR-006](ADR-006-oracle-cloud-deferred.md) | Oracle Cloud Always Free — deferred | Deferred | 2026-08-08 |
+| [ADR-007](ADR-007-unified-question-schema.md) | Unified question schema | Accepted | 2026-08-13 |
+| [ADR-008](ADR-008-excluded-sources-and-competitions.md) | Excluded sources and competition types | Accepted | 2026-08-08 |
+| [ADR-009](ADR-009-no-accounts.md) | No user accounts | Accepted | 2026-08-08 |
+| [ADR-010](ADR-010-responsive-and-accessible-upfront.md) | Responsive and accessible from day one | Accepted | 2026-08-08 |
+| [ADR-011](ADR-011-pwa-deferred.md) | PWA / Service Worker — deferred | Deferred | 2026-08-08 |
+| [ADR-012](ADR-012-language-policy.md) | Language policy | Accepted | 2026-08-08 |
+| [ADR-013](ADR-013-api-posture-read-only.md) | API posture — read-only, stateless, grading in the browser | Accepted | 2026-08-12 |
+| [ADR-014](ADR-014-no-css-framework.md) | Custom CSS only — no Bootstrap or utility framework | Accepted | 2026-08-09 |
+| [ADR-015](ADR-015-frontend-deploy-manual-only.md) | Frontend deploy is manual only | Accepted | 2026-08-09 |
+| [ADR-016](ADR-016-localstorage-quiz-session.md) | Quiz session persisted in browser storage | Accepted | 2026-08-12 |
+| [ADR-017](ADR-017-runner-allocation.md) | Runner allocation — hosted for the Pages path | Accepted | 2026-08-14 |
+| [ADR-018](ADR-018-wasm-asset-fingerprinting-on-pages.md) | WASM asset fingerprinting on static hosting | Accepted | 2026-08-14 |
+| [ADR-019](ADR-019-client-http-timeout-cold-start.md) | Client HTTP timeout covers API cold start | Accepted | 2026-08-14 |
+| [ADR-020](ADR-020-scalability-posture.md) | Scalability posture — one concurrent user | Shell | 2026-08-12 |
+| [ADR-021](ADR-021-progress-tracking-browser-side.md) | Long-term progress tracking — browser-side | Shell | 2026-08-12 |
+| [ADR-022](ADR-022-blazor-feature-folders.md) | Feature-based folders in the frontend | Accepted | 2026-08-13 |
+| [ADR-023](ADR-023-solution-layout-and-project-naming.md) | Solution layout and project naming | Accepted | 2026-08-13 |
+| [ADR-024](ADR-024-value-based-answers.md) | Answers are values, not option indices | Accepted | 2026-08-13 |
+| [ADR-025](ADR-025-questions-filter-endpoint-contract.md) | Question filtering endpoint contract | Accepted | 2026-08-14 |
+| [ADR-026](ADR-026-versioning-via-git-tags.md) | Release versioning via git tags, auto patch bump | Accepted | 2026-08-13 |
+| [ADR-027](ADR-027-main-branch-protection.md) | Protected main branch with a required CI check | Accepted | 2026-08-13 |
+| [ADR-028](ADR-028-robots-txt-two-origins.md) | Crawler control across two origins | Accepted | 2026-08-13 |
+| [ADR-029](ADR-029-question-storage-sqlite.md) | Question storage — SQLite in `data/`, Dapper | Accepted | 2026-08-14 |
+| [ADR-030](ADR-030-api-composition-controllers.md) | API composition — controllers, versioned routes, startup extensions | Accepted | 2026-08-14 |
 
-## Amendment graph
+## Open decisions
 
-- **ADR-002** (no backend Phase 1) — amended 2026-08-09 for POC scope by **ADR-020**; amended 2026-08-12: v1.0 ships backend, static-JSON delivery superseded. Status: Superseded for question delivery; `IQuestionRepository` seam (ADR-003) remains.
-- **ADR-009** (versioned static JSON) — amended 2026-08-12: server-side filtering supersedes static-JSON delivery for questions. `manifest.json`/versioned filenames no longer used for question data.
-- **ADR-011** (unified schema) — clarified by **ADR-022** (2026-08-08); amended 2026-08-12 (a): typed tag fields replace flat `tags[]` (breaking — `category`, `algorithms`, `source`, `sourceUrl`, `year`, `difficulty`, `explanationSource`, `source_raw`); amended 2026-08-12 (b): type enum renames (`single`/`multi` replace `singleAbcd`/`multiSelect`), `correctAnswer` shape per type.
-- **ADR-018** (PWA deferred) — amended 2026-08-12: offline mode deferred further; server-side filtering dependency adds complexity.
-- **ADR-019** (language policy) — amended 2026-08-12: Polish snake_case exception for tag vocabulary (`category[]`, `algorithms[]` values use diacritic-stripped Polish words).
-- **ADR-020** (POC thin API) — amended 2026-08-12: grading confirmed client-side; static-JSON fallback dropped; server-side filtering is v1.0 decision.
-- **ADR-007** (Render.com) — updated `Accepted (test pending)` → `Accepted`. M11 resolved: no card required. See ADR-007 amendment section.
-- **ADR-001** (Blazor WASM) — POC gotchas appended: Bootstrap conflict, `#app` sticky footer, `Nav.BaseUri`, JS interop needs.
-- **ADR-006** (GitHub Pages) — POC confirmed. Push trigger removed. See ADR-006 amendment + ADR-024.
-- **ADR-003** (repository seam) — amended 2026-08-13: query abstraction takes a structured query object + cancellation token; second operation added for available filter values; POC filter type deleted; static-JSON fallback implementation dropped; abstraction moves to the Domain project. Seam itself unchanged and now implemented on both sides.
-- **ADR-011** (unified schema) — amended 2026-08-13: v1.0 field list frozen. Adds `olympiad`, changes `stage` to string, `id` to int, `year` to nullable int, normalises `source_raw` → `sourceRaw`, removes `competition`/`voivodeship`, adds mandatory `alt` on image blocks, splits grading normalisation (see ADR-034), records the answers-exist-among-options invariant.
-- **ADR-021** (shared class library) — amended 2026-08-13: project superseded by `Core/olympiad-quizzer-net.Domain` (ADR-032); reasoning kept; contents updated for the v1.0 schema and for session logic moved inward; "no I/O, no DI" rule now structurally enforced with one bounded serializer exception.
-- **ADR-020** (POC thin API) — further amended in effect by **ADR-035**, which specifies the filtering contract ADR-020's amendment only named.
-- **ADR-032** supersedes the *layout* in ADR-021. ADR-031 sits inside ADR-032's Presentation ring.
-- **ADR-034** overrides ADR-011's index-based `correct_answer` table and ADR-022's index semantics.
-- **ADR-036** is constrained by **ADR-037** (protected `main` rules out committing a version back) and depends on it staying that way — no tag protection rule may be added.
-- **ADR-032** (Onion layout) — clarified by **ADR-039** (2026-08-14): project, assembly, folder and namespace names all take the form `{SolutionName}.{FolderName}[.{SubName}]`; L0 moves to `Core/`; a shared test-constants project is added under `Core/`. ADR-032's layer table shows pre-rename names and is not retro-edited — ADR-039's rename table wins.
-- **ADR-033** (language posture) — amended 2026-08-14: the entry-point type stays `public` but is no longer `partial`. **ADR-041** removed the reason for the split.
-- **ADR-039 / ADR-040 / ADR-041** ship as one structural change. They share the container-build edit, the solution-file edit and the L1 project's fixture link. Splitting them across changes leaves the build broken between them.
-- **ADR-035** (filtering contract) — unchanged by **ADR-041** and the reason MVC controllers were rejected there; the controller attribute's automatic validation responses would have silently replaced the frozen response shape.
-- **ADR-007** (Render.com free plan, no persistent disk) — the constraint that forced **ADR-040** to bake the question bank into the image rather than mount it. Revisit ADR-040 if the plan changes.
-- **ADR-041** (endpoint structure) — amended 2026-08-14 (self-amendment, mirror rule only): the L1 test mirror rule gains (a) an optional aspect word before `Tests`, so one production unit may be covered by several focused files provided every file carries the production stem; (b) a project-qualifier folder, required when the test project covers a production project other than its own counterpart. Consequence: the surviving L1 `Infrastructure/` folder is correct and keeps its name, but gains mirrored `Json/` and `DependencyInjection/` subfolders; two files are renamed to name their real subject. Endpoint and startup layout unchanged. Rename table in the amendment section.
+| Where | What is not decided |
+|---|---|
+| [ADR-020](ADR-020-scalability-posture.md) | At what concurrent-user count the architecture changes, and the upgrade path. |
+| [ADR-021](ADR-021-progress-tracking-browser-side.md) | Whether long-term progress tracking is built, its UX, and how data-loss risk is communicated. |
+| [ADR-017](ADR-017-runner-allocation.md) | Overall runner strategy — whether hosted minutes suffice, or the local machine gets its full toolchain fixed. The Pages-path allocation is decided and provisional. |
 
-## ADR content rule (from 2026-08-13, ADR-031 onward)
+## Cleanup note — 2026-08-14
 
-ADRs state WHAT was decided and WHY, not HOW. No class, method, interface or property names in
-an ADR body; no code listings of production types; no project-file snippets. Paths, external
-URLs, secret names, configuration keys and wire-format field names are allowed. Implementation
-detail belongs in the design document. ADRs numbered below 031 predate this rule and are not
-retro-edited — the rule protects new content. Full text: `docs/coding-standards.md`.
+The log was renumbered. Prior numbering does not map to current numbering, and prior ADR numbers appearing in git history, commit messages or pull requests refer to the pre-cleanup log.
+
+Decisions deleted as fully dead, with no successor: no-backend-Phase-1, versioned-static-JSON question delivery, static image paths and filename convention, `sourceUrls[]` explanation bindings, and the index-based answer semantics. Their live residue, where any existed, was absorbed into ADR-007, ADR-024 and ADR-029.
+
+Also deleted, as a duplicate rather than as dead: the C#-language-posture ADR. Nullable-disabled, no top-level statements, implicit usings, `var` policy and warnings-as-errors are all stated with their reasoning in `docs/standards/projects-and-solution.md` and `docs/standards/csharp.md`. An ADR restating a rule that lives there earns nothing.
+
+Decisions merged: the shared-class-library, Onion-layout and project-naming ADRs into [ADR-023](ADR-023-solution-layout-and-project-naming.md); the data-access-library and bank-location ADRs into [ADR-029](ADR-029-question-storage-sqlite.md); the two exclusion lists into [ADR-008](ADR-008-excluded-sources-and-competitions.md); the responsive and accessibility ADRs into [ADR-010](ADR-010-responsive-and-accessible-upfront.md).
+
+Two decisions reversed: [ADR-030](ADR-030-api-composition-controllers.md) chooses MVC controllers and versioned routes, replacing minimal-API route registration on unversioned paths. [ADR-029](ADR-029-question-storage-sqlite.md) chooses SQLite as the runtime store, replacing the flat-JSON read that existed only to ship sooner.

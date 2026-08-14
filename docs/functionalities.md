@@ -18,7 +18,7 @@ One entry per user-facing feature. Add new entries here when planning, not after
 ### F-01 — Multiple question types
 
 **Status:** active  
-**ADR:** ADR-011, ADR-022
+**ADR:** ADR-007, ADR-024
 
 Types in use: `single`, `multi`, `shortAnswer`. Types stubbed for future VEA content: `trueFalse`, `ordering`, `matching`. UI does not need to render the latter three yet.
 
@@ -27,16 +27,16 @@ Types in use: `single`, `multi`, `shortAnswer`. Types stubbed for future VEA con
 ### F-02 — Exam simulation mode with timer
 
 **Status:** active  
-**ADR:** ADR-025
+**ADR:** ADR-016
 
-Timed quiz. OIJ default: 30 questions, 90 minutes. Timer is wall-clock strict — refresh does not reset it. State persisted in `localStorage`. See ADR-025.
+Timed quiz. OIJ default: 30 questions, 90 minutes. Timer is wall-clock strict — refresh does not reset it. State persisted in `localStorage`. See ADR-016.
 
 ---
 
 ### F-03 — Free-learning mode (no timer)
 
 **Status:** active  
-**ADR:** ADR-025
+**ADR:** ADR-016
 
 Quiz mode with the timer checkbox unchecked. No countdown — questions are answered at the student's own pace. Session ends on explicit navigation away or summary page.
 
@@ -45,7 +45,7 @@ Quiz mode with the timer checkbox unchecked. No countdown — questions are answ
 ### F-04 — Server-side question filtering by category, algorithm, year, stage
 
 **Status:** active  
-**ADR:** ADR-020 amendment, ADR-011 amendment
+**ADR:** ADR-025, ADR-013
 
 Client sends filter parameters + requested count. API returns a random subset. Client never downloads the full bank.
 
@@ -54,7 +54,7 @@ Client sends filter parameters + requested count. API returns a random subset. C
 ### F-05 — Session persistence via localStorage (quiz state, timer)
 
 **Status:** active  
-**ADR:** ADR-025
+**ADR:** ADR-016
 
 Full quiz payload cached in `localStorage` for the active session. Navigate away and return = resume. Session ends on timeout or explicit cancel. Cache cleared on leaving summary.
 
@@ -63,16 +63,16 @@ Full quiz payload cached in `localStorage` for the active session. Navigate away
 ### F-06 — Responsive design (phone/tablet/desktop)
 
 **Status:** active  
-**ADR:** ADR-016
+**ADR:** ADR-010
 
-Custom CSS, no framework (ADR-023). Breakpoints hand-rolled in `app.css`.
+Custom CSS, no framework (ADR-014). Breakpoints hand-rolled in `app.css`.
 
 ---
 
 ### F-07 — Dark/light theme + font size settings (localStorage)
 
 **Status:** active  
-**ADR:** ADR-025 (localStorage), ADR-023 (custom CSS custom properties)
+**ADR:** ADR-016 (localStorage), ADR-014 (custom CSS custom properties)
 
 Theme toggle and font size preference stored in `localStorage`. Survives browser restart.
 
@@ -81,7 +81,7 @@ Theme toggle and font size preference stored in `localStorage`. Survives browser
 ### F-08 — WCAG AA accessibility (ARIA, focus-visible, contrast)
 
 **Status:** active  
-**ADR:** ADR-017
+**ADR:** ADR-010
 
 ARIA labels, focus-visible, sufficient contrast. Built upfront, not retrofitted.
 
@@ -90,7 +90,7 @@ ARIA labels, focus-visible, sufficient contrast. Built upfront, not retrofitted.
 ### F-09 — Explanation per question (with explanationSource distinction)
 
 **Status:** active  
-**ADR:** ADR-011 amendment, ADR-012
+**ADR:** ADR-007
 
 Each question carries an `explanation: [ContentBlock]` and `explanationSource: string`. Values in use: `"AI generated"`, `"official"`, `"documentation"`, `"community"`. UI shows source label.
 
@@ -99,7 +99,7 @@ Each question carries an `explanation: [ContentBlock]` and `explanationSource: s
 ### F-10 — OIJ mode (30 questions, 90 minutes, stage rules)
 
 **Status:** active  
-**ADR:** ADR-007, ADR-035, docs/rules/oij.md
+**ADR:** ADR-025, docs/rules/oij.md
 
 Rules defined in `docs/rules/oij.md`. Client reads the machine-readable rule block via `ModeCatalog` to pre-fill filters and time limit. Default: 30 questions, 90 minutes, E1 stage pre-selected.
 
@@ -126,9 +126,9 @@ Open-answer questions where the student writes code that is executed against tes
 ### F-13 — PWA / offline mode
 
 **Status:** planned, deferred  
-**ADR:** ADR-018 (deferred), ADR-018 amendment
+**ADR:** ADR-011 (deferred)
 
-Server-side filtering makes offline mode significantly more complex. Deferred until filtering is stable. See ADR-018 amendment.
+Server-side filtering makes offline mode significantly more complex. Deferred until filtering is stable. See ADR-011.
 
 ---
 
@@ -138,3 +138,4 @@ Server-side filtering makes offline mode significantly more complex. Deferred un
 |---|---|
 | 2026-08-12 | Initial registry — F-01..F-13 seeded from plan and ADLs |
 | 2026-08-13 | F-03, F-10 marked active — delivered by v1.0 |
+| 2026-08-15 | ADR pointers remapped after the ADL renumber; F-04 and F-10 corrected to cite the filtering-contract ADR |
