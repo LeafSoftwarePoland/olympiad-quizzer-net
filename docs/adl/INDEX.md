@@ -1,6 +1,6 @@
 # Architecture Decision Log
 
-Last updated: 2026-08-13 (v1.0 architecture: ADR-031..038 added; amendments to ADR-003/011/021)
+Last updated: 2026-08-14 (PR #2 structural feedback: ADR-039..041 added; amendment to ADR-033)
 
 ## How to amend an ADR
 
@@ -48,6 +48,9 @@ New ADR > amendment when: decision reverses entirely, new technology, or amendme
 | [ADR-036](ADR-036-versioning-via-git-tags.md) | Release versioning via git tags, auto patch bump | Accepted | 2026-08-13 |
 | [ADR-037](ADR-037-main-branch-protection.md) | Protected `main` with a required CI check | Accepted | 2026-08-13 |
 | [ADR-038](ADR-038-robots-txt-two-origins.md) | Crawler control across two origins | Accepted | 2026-08-13 |
+| [ADR-039](ADR-039-project-naming-convention.md) | Project and solution naming convention | Accepted | 2026-08-14 |
+| [ADR-040](ADR-040-question-bank-data-location.md) | Question bank data lives outside the API project | Accepted | 2026-08-14 |
+| [ADR-041](ADR-041-api-endpoint-structure.md) | API endpoints and startup composition outside the entry point | Accepted | 2026-08-14 |
 
 ## Amendment graph
 
@@ -67,6 +70,12 @@ New ADR > amendment when: decision reverses entirely, new technology, or amendme
 - **ADR-032** supersedes the *layout* in ADR-021. ADR-031 sits inside ADR-032's Presentation ring.
 - **ADR-034** overrides ADR-011's index-based `correct_answer` table and ADR-022's index semantics.
 - **ADR-036** is constrained by **ADR-037** (protected `main` rules out committing a version back) and depends on it staying that way — no tag protection rule may be added.
+- **ADR-032** (Onion layout) — clarified by **ADR-039** (2026-08-14): project, assembly, folder and namespace names all take the form `{SolutionName}.{FolderName}[.{SubName}]`; L0 moves to `Core/`; a shared test-constants project is added under `Core/`. ADR-032's layer table shows pre-rename names and is not retro-edited — ADR-039's rename table wins.
+- **ADR-033** (language posture) — amended 2026-08-14: the entry-point type stays `public` but is no longer `partial`. **ADR-041** removed the reason for the split.
+- **ADR-039 / ADR-040 / ADR-041** ship as one structural change. They share the container-build edit, the solution-file edit and the L1 project's fixture link. Splitting them across changes leaves the build broken between them.
+- **ADR-035** (filtering contract) — unchanged by **ADR-041** and the reason MVC controllers were rejected there; the controller attribute's automatic validation responses would have silently replaced the frozen response shape.
+- **ADR-007** (Render.com free plan, no persistent disk) — the constraint that forced **ADR-040** to bake the question bank into the image rather than mount it. Revisit ADR-040 if the plan changes.
+- **ADR-041** (endpoint structure) — amended 2026-08-14 (self-amendment, mirror rule only): the L1 test mirror rule gains (a) an optional aspect word before `Tests`, so one production unit may be covered by several focused files provided every file carries the production stem; (b) a project-qualifier folder, required when the test project covers a production project other than its own counterpart. Consequence: the surviving L1 `Infrastructure/` folder is correct and keeps its name, but gains mirrored `Json/` and `DependencyInjection/` subfolders; two files are renamed to name their real subject. Endpoint and startup layout unchanged. Rename table in the amendment section.
 
 ## ADR content rule (from 2026-08-13, ADR-031 onward)
 

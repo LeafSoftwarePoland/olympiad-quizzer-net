@@ -15,23 +15,23 @@ The OIJ publishes past exam questions as PDFs. There is no interactive practice 
 **1. Run the API**
 
 ```
-dotnet run --project source/App/olympiad-quizzer-net.API
+dotnet run --project source/App/olympiad-quizzer-net.App.API
 ```
 
 The API listens on `http://localhost:10000` by default. Endpoints: `GET /healthz`, `GET /api/filters`, `GET /api/questions`.
 
-In development mode (the default for `dotnet run`), the API automatically loads `appsettings.Development.json`, which points at a small 6-question fixture (`Data/dev-questions.json`) instead of the full 210-question bank. This keeps startup fast and covers all three question types — single choice, multiple choice, and short answer.
+In development mode (the default for `dotnet run`), the API automatically loads `appsettings.Development.json`, which points at a small 6-question fixture (`Data/dev-questions.json`) instead of the full bank. This keeps startup fast and covers all three question types — single choice, multiple choice, and short answer.
 
-To use the full question bank locally, delete or rename `appsettings.Development.json`, or override the path:
+To use the full question bank locally, delete or rename `appsettings.Development.json`, or override the path with an absolute path (relative paths resolve against the build output directory, not the repo root):
 
 ```
-dotnet run --project source/App/olympiad-quizzer-net.API -- --QuestionBank:FilePath=Data/questions.json
+dotnet run --project source/App/olympiad-quizzer-net.App.API -- --QuestionBank:FilePath="$(pwd)/data/questions.json"
 ```
 
 **2. Run the frontend**
 
 ```
-dotnet run --project source/App/olympiad-quizzer-net.Client
+dotnet run --project source/App/olympiad-quizzer-net.App.Client
 ```
 
 Opens at `http://localhost:<port>`. The frontend reads `wwwroot/appsettings.json` for `ApiBaseUrl`; in development this defaults to `http://localhost:10000`.
@@ -42,11 +42,11 @@ Opens at `http://localhost:<port>`. The frontend reads `wwwroot/appsettings.json
 dotnet test OlympiadQuizzer.slnx -c Release
 ```
 
-L0 (unit) and L1 (integration) tests — 199 total. Tests always use their own fixture files, not the dev or production question bank.
+L0 (unit) and L1 (integration) tests. L1 tests include bank integrity checks that run against `data/questions.json`; all other tests use their own fixture files.
 
 ## Dev fixture
 
-`source/App/olympiad-quizzer-net.API/Data/dev-questions.json` — 6 questions:
+`source/App/olympiad-quizzer-net.App.API/Data/dev-questions.json` — 6 questions:
 
 | # | Type | Topic |
 |---|---|---|
@@ -60,16 +60,18 @@ L0 (unit) and L1 (integration) tests — 199 total. Tests always use their own f
 ## Project structure
 
 ```
+data/                                   — production question bank (questions.json + images/)
 source/
   Core/
-    olympiad-quizzer-net.Domain/      — domain types, grader, session logic, IQuestionRepository
+    olympiad-quizzer-net.Core.Domain/      — domain types, grader, session logic, IQuestionRepository
+    olympiad-quizzer-net.Core.Domain.L0/   — domain unit tests (xUnit)
+    olympiad-quizzer-net.Core.Tests.Common/ — shared test constants
   Infrastructure/
-    olympiad-quizzer-net.SQLite/      — JSON question bank loader, filtering, shuffling
+    olympiad-quizzer-net.Infrastructure.SQLite/ — JSON question bank loader, filtering, shuffling
   App/
-    olympiad-quizzer-net.API/         — ASP.NET Core minimal API, CORS, Dockerfile
-    olympiad-quizzer-net.Client/      — Blazor WASM frontend, feature folders
-    olympiad-quizzer-net.Domain.L0/   — domain unit tests (xUnit)
-    olympiad-quizzer-net.API.L1/      — integration tests via WebApplicationFactory (xUnit)
+    olympiad-quizzer-net.App.API/          — ASP.NET Core minimal API, Endpoints/, Extensions/, Dockerfile
+    olympiad-quizzer-net.App.Client/       — Blazor WASM frontend, feature folders
+    olympiad-quizzer-net.App.API.L1/       — integration tests via WebApplicationFactory (xUnit)
 docs/
   adl/          — Architecture Decision Log
   integrations/ — GitHub Pages, Render.com, GitHub Actions documentation

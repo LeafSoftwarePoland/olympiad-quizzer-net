@@ -20,18 +20,18 @@ Render never auto-deploys from git push — deploy hook only.
 
 ```
 Build stage:  mcr.microsoft.com/dotnet/sdk:10.0
-              dotnet publish source/App/olympiad-quizzer-net.API/olympiad-quizzer-net.API.csproj -c Release
+              dotnet publish source/App/olympiad-quizzer-net.App.API/olympiad-quizzer-net.App.API.csproj -c Release
 Runtime stage: mcr.microsoft.com/dotnet/aspnet:10.0
               Port: 10000 (Render default for free tier)
               ASPNETCORE_ENVIRONMENT=Production
 ```
 
-`source/Core/` and `source/Infrastructure/` are copied into the build context alongside `source/App/olympiad-quizzer-net.API/` so all project references build inside Docker. The Dockerfile lives at `source/App/olympiad-quizzer-net.API/Dockerfile`.
+`source/Core/` and `source/Infrastructure/` are copied into the build context alongside `source/App/olympiad-quizzer-net.App.API/` so all project references build inside Docker. `data/` is copied into the runtime image so the API finds the question bank at `data/questions.json`. The Dockerfile lives at `source/App/olympiad-quizzer-net.App.API/Dockerfile`.
 
 ### What the API serves
 
 - `GET /healthz` — plain 200. Used by deploy workflow and UptimeRobot.
-- `GET /api/questions` — returns question data as JSON. Questions loaded from `Data/questions.json` inside the container.
+- `GET /api/questions` — returns question data as JSON. Questions loaded from `data/questions.json` inside the container.
 
 CORS is configured to allow requests from the GitHub Pages origin (`https://leafsoftwarepoland.github.io`).
 

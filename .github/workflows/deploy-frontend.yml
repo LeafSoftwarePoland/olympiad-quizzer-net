@@ -83,7 +83,7 @@ jobs:
 
       - name: Publish
         shell: pwsh
-        run: dotnet publish source/App/olympiad-quizzer-net.Client/olympiad-quizzer-net.Client.csproj -c Release -o publish-out
+        run: dotnet publish source/App/olympiad-quizzer-net.App.Client/olympiad-quizzer-net.App.Client.csproj -c Release -o publish-out
 
       - name: Rewrite base href, inject API URL and version, add Pages files
         shell: pwsh

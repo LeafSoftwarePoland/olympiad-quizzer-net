@@ -23,16 +23,45 @@ policy), ADR-031 (feature folders), ADR-032 (solution layout), ADR-033 (language
 Every `.csproj` in this repo sets all five properties:
 
 ```xml
-<AssemblyName>olympiad-quizzer-net.<Part></AssemblyName>
-<RootNamespace>OlympiadQuizzer.<Part></RootNamespace>
+<AssemblyName>olympiad-quizzer-net.<FolderName>.<SubName></AssemblyName>
+<RootNamespace>OlympiadQuizzer.<FolderName>.<SubName></RootNamespace>
 <Nullable>disable</Nullable>
 <ImplicitUsings>enable</ImplicitUsings>
 <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 ```
 
-`AssemblyName` and `RootNamespace` are **always explicit**. Project file names contain dashes;
-namespaces cannot. Left to MSBuild's default, the root namespace becomes
-`olympiad_quizzer_net.Domain`.
+### Naming rule — `{SolutionName}.{FolderName}[.{SubName}]`
+
+Applies to the project folder, the `.csproj` file name, the `AssemblyName` **and** the
+`RootNamespace`. All four agree. ADR-039.
+
+| Token | In a file/assembly name | In a namespace |
+|---|---|---|
+| `{SolutionName}` | `olympiad-quizzer-net` | `OlympiadQuizzer` — dashes are illegal, `-net` is a repo-name artefact |
+| `{FolderName}` | the ring folder under `source/` | same |
+| `{SubName}` | component, plus `.L0` / `.L1` for test projects | same, acronym casing per the Naming table |
+
+| Project folder | AssemblyName | RootNamespace |
+|---|---|---|
+| `source/Core/olympiad-quizzer-net.Core.Domain` | `olympiad-quizzer-net.Core.Domain` | `OlympiadQuizzer.Core.Domain` |
+| `source/Core/olympiad-quizzer-net.Core.Domain.L0` | `olympiad-quizzer-net.Core.Domain.L0` | `OlympiadQuizzer.Core.Domain.L0` |
+| `source/Core/olympiad-quizzer-net.Core.Tests.Common` | `olympiad-quizzer-net.Core.Tests.Common` | `OlympiadQuizzer.Core.Tests.Common` |
+| `source/Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite` | `olympiad-quizzer-net.Infrastructure.SQLite` | `OlympiadQuizzer.Infrastructure.SQLite` |
+| `source/App/olympiad-quizzer-net.App.API` | `olympiad-quizzer-net.App.API` | `OlympiadQuizzer.App.Api` |
+| `source/App/olympiad-quizzer-net.App.API.L1` | `olympiad-quizzer-net.App.API.L1` | `OlympiadQuizzer.App.Api.L1` |
+| `source/App/olympiad-quizzer-net.App.Client` | `olympiad-quizzer-net.App.Client` | `OlympiadQuizzer.App.Client` |
+
+`API` in the dashed name, `Api` in the namespace — the dashed name mirrors the folder, the
+namespace follows the acronym rule in the Naming table below.
+
+A test project lives in the folder of the ring it exercises, so its `{FolderName}` is that ring's:
+L0 tests Domain and sits in `Core/`; L1 tests the API and sits in `App/`.
+
+The solution file stays `OlympiadQuizzer.slnx` — a deliberate exception, see ADR-039.
+
+`AssemblyName` and `RootNamespace` are **always explicit** even though the rule now makes them
+derivable. Project file names contain dashes; namespaces cannot. Left to MSBuild's default, the
+root namespace becomes `olympiad_quizzer_net_Core_Domain`.
 
 `TreatWarningsAsErrors` is on. To suppress a specific diagnostic, suppress that ID with a
 one-line comment stating why. Never turn the property off.
@@ -40,8 +69,32 @@ one-line comment stating why. Never turn the property off.
 ## Program entry points
 
 **No top-level statements.** Explicit class, explicit `Main`, declared `public` so the test host
-and the logger factory can both reach it, and `partial` so startup can be split by concern
-across files. See ADR-033.
+and the logger factory can both reach it. **Not `partial`** — routes and startup configuration
+live in their own units, so there is nothing to split. No `Program.*.cs` file may exist.
+See ADR-033 (amended) and ADR-041.
+
+## API file layout
+
+Routes live one file per top-level route under `Endpoints/`. Startup configuration lives one file
+per concern under `Extensions/`, as static extension classes over the service container or the
+built application. Minimal API only — no MVC, no controller base type. ADR-041.
+
+Test mirror rule: test file name = production file name with `Tests` appended
+(`QuestionsEndpoints.cs` → `QuestionsEndpointsTests.cs`), in the same folder path relative to its
+project root.
+
+One file per production file is the default. When one production unit has several genuinely distinct
+testing concerns, an aspect word may be inserted before `Tests`
+(`JsonQuestionRepository.cs` → `JsonQuestionRepositoryShuffleTests.cs`). The production stem comes
+first and is spelled exactly as the production file spells it. The aspect names a concern, not a
+scenario — scenarios belong in method names.
+
+When a test project covers a production project other than its own counterpart, the mirrored path
+is prefixed with a qualifier folder named after that project's solution folder — for example
+`Infrastructure/Json/`. Tests for the test project's own counterpart stay unqualified at its root.
+
+Cross-cutting suites with no production counterpart keep descriptive names, and may sit in the
+folder of the concern they span. ADR-041 and its amendment.
 
 ---
 
@@ -53,16 +106,19 @@ The `Scenario` segment may itself contain underscores when a scenario needs more
 group. The three-part shape must stay recognisable: what is called, under what conditions, what
 must happen.
 
+The `ExpectedResult` segment must use one of: `Returns`, `Throws`, `Does`, `Executes`, or `Is`
+to make the outcome explicit.
+
 Examples from this repo:
 
 - `Grade_Multi_AllExpectedValues_ReturnsFullPoints`
 - `Grade_ShortAnswer_WrongText_ReturnsZero`
 - `Grade_Single_TwoSubmittedValues_ReturnsIncorrect`
-- `NormalizeFreeText_SubscriptDigits_FoldsToAscii`
-- `NormalizeChoice_SubscriptDigit_DoesNotFoldIt`
-- `GetAsync_CategoryAndYear_AppliesAndAcrossTypes`
-- `GetQuestions_LimitAboveThirty_ReturnsBadRequest`
-- `Grade_UnknownType_NeverThrows_Always`
+- `NormalizeFreeText_WithSubscriptDigits_ReturnsAsciiEquivalent`
+- `NormalizeChoice_WithSubscriptDigit_DoesNotFoldIt`
+- `GetAsync_WithCategoryAndYear_ReturnsOnlyQuestionsSatisfyingBoth`
+- `GetQuestions_WithLimitAboveThirty_ReturnsBadRequest`
+- `Grade_UnknownType_ReturnsIncorrectAndZeroPoints`
 
 Type names in test names use the **v1.0** enum names — `Single`, `Multi`, `ShortAnswer`,
 `TrueFalse`, `Ordering`, `Matching`. `SingleAbcd` and `MultiSelect` are gone; a test name
@@ -82,7 +138,7 @@ After writing a test, re-read the name. If it applies to a different test body �
   Avoid static mutable state — a shared static would make test order significant.
 - Helper methods: at the bottom of the test class, after all test methods.
 - Magic strings → named constants. A repeated `"sledzenie_kodu"` becomes
-  `private const string CategoryCodeTracing = "sledzenie_kodu";`.
+  `private const string _categoryCodeTracing = "sledzenie_kodu";`.
 - Object construction: use the `QuestionBuilder` test helper so each test states only the field
   it cares about. A schema change should touch the builder, not every test file.
 - Failure messages on data-integrity tests must name the offending record. "expected true,
@@ -98,16 +154,17 @@ No `if` in a test body. A branch means the test proves two different things.
 
 ## Test tier traits
 
-Tag every test with its tier so CI can filter:
+Tag every test with its tier so CI can filter. Use the `TestTiers` constants from
+`OlympiadQuizzer.Core.Tests.Common` — never raw string literals:
 
 ```csharp
-[Trait("Tier", "L0")]   // unit — no I/O, no network
-[Trait("Tier", "L1")]   // integration — real file I/O, real JSON, WebApplicationFactory
+[Trait(TestTiers.Tier, TestTiers.L0)]   // unit — no I/O, no network
+[Trait(TestTiers.Tier, TestTiers.L1)]   // integration — real file I/O, real JSON, WebApplicationFactory
 ```
 
 The trait goes on the **class**, not on each method — a whole test class belongs to one tier by
 construction, since the tier is determined by which test project it lives in. A class in
-`olympiad-quizzer-net.Domain.L0` tagged `L1` is a defect.
+`olympiad-quizzer-net.Core.Domain.L0` tagged `L1` is a defect.
 
 Filtering: `dotnet test --filter "Tier=L0"`.
 
@@ -133,7 +190,7 @@ mocking library:
 
 Everything else in L1 is the real implementation, including the real question bank file.
 
-If a mock library is ever needed for L1+, decide at that point and record the choice here.
+If a mock library is needed for L1+, use **Moq**.
 
 ---
 
@@ -153,21 +210,51 @@ If a mock library is ever needed for L1+, decide at that point and record the ch
 
 ## Types and `var`
 
-Prefer explicit types. `var` only where the type already appears on the same line:
+Prefer `var` where the type is obvious from context — the right-hand side makes the type
+unambiguous without looking elsewhere:
 
 ```csharp
-// Yes — the type is right there.
+// Yes — type is explicit on the right-hand side.
 var repository = new JsonQuestionRepository(loader, shuffler, logger);
+var builder = new StringBuilder(value.Length);
+var port = Environment.GetEnvironmentVariable("PORT");
 
-// No — the reader has to go looking.
-var result = Grade(question, answer);
-
-// Yes.
+// No — type is not evident from the method name alone.
 GradeResult result = Grade(question, answer);
+
+// No — numeric literal where the exact type matters.
+int matched = 0;
+bool positional = question.Type == QuestionType.TrueFalse;
 ```
 
-Never `var` for a numeric or `bool` local. Never `var` for the result of a LINQ chain.
-Target-typed `new()` is fine — the type is on the left.
+Keep explicit type when:
+- The literal is numeric or `bool` and the exact type matters (`int x = 0`, `bool flag = true`).
+- The right-hand side is a method call and the return type is not self-evident from the name.
+- The declaration widens to an interface deliberately (`IEnumerable<Question> candidates = ...`).
+
+Never `var` for the result of a LINQ chain where the concrete type is opaque.
+Target-typed `new()` requires the explicit type on the left — do not use `var` with it.
+
+---
+
+## Initializers and expressions
+
+- Use primary constructors where applicable.
+- Prefer simplified initializers:
+  - `new()` (target-typed new) when the type is on the left.
+  - `[]` for an empty collection when the element type is evident from context.
+  - `[.. existingCollection]` for spread / copy.
+- Prefer collection expressions over `new List<T> { }` or `new T[] { }`.
+
+```csharp
+// Preferred
+List<string> tags = [];
+List<Question> copy = [.. original];
+
+// Avoid
+List<string> tags = new List<string>();
+Question[] arr = new Question[0];
+```
 
 ---
 
@@ -245,6 +332,7 @@ diacritics dropped** (ą→a, ę→e, ó→o, ś→s, ł→l, ź/ż→z, ć→c,
 | Types, methods, properties, constants, enum members | PascalCase | `QuestionQuery`, `MaxLimit` |
 | Locals, parameters | camelCase | `matchedCount`, `cancellationToken` |
 | Private fields | `_camelCase` | `_shuffler` |
+| File-scoped private constants | `_camelCase` | `_corsPolicyName` |
 | Interfaces | `I` + PascalCase | `IQuestionRepository` |
 | Acronyms | two letters upper, three-plus PascalCase | `IO`, `ID`, but `Api`, `Json`, `Html`, `Url` |
 | `.cs` / `.razor` files | match the single type they contain | one public type per file |
@@ -256,6 +344,12 @@ diacritics dropped** (ą→a, ę→e, ó→o, ś→s, ł→l, ź/ż→z, ć→c,
 
 `sourceRaw`, not `source_raw`. The ADR-011 amendment text writes it snake_case, which
 contradicts the same ADR's camelCase rule. camelCase wins.
+
+### Using directives
+
+Do not use fully-qualified type names when a `using` directive covers it. Add the `using` and
+shorten the reference. Fully-qualified names are load-bearing only when two namespaces export
+the same simple name and a `using` alias would be less clear than the qualification.
 
 ---
 

@@ -73,6 +73,18 @@ Also settled here because it travels with the same decision:
   with warnings-as-errors that is a build break rather than a warning, which is the point
 - Nullable-enabled is the ecosystem direction; re-enabling later is a large mechanical change
 
+## Amendment — 2026-08-14 — entry point no longer partial (ADR-041)
+
+**Overrides:** Decision → Entry points → the `partial` bullet.
+
+- Entry-point types are **not** declared `partial`. ADR-041 moves routes and startup configuration
+  out of the entry point into their own units, so there is nothing left to split across files.
+- The **public** requirement is unchanged and is the load-bearing one — the integration test host and
+  the logger factory both reach the type through it.
+- The bullet's clarification stands and is worth keeping: `partial` was never *required* by the test
+  host. That requirement belongs to top-level statements, which emit an internal type.
+- Nullable posture, warnings-as-errors, implicit usings and `var` policy: all unchanged.
+
 ## Remarks / Sources
 
 - Reversal trigger: if the question schema ever becomes mostly-required — for example after a

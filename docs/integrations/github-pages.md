@@ -15,7 +15,7 @@ The `deploy-frontend.yml` workflow runs two jobs:
 **Job: build** (`ubuntu-latest`)
 1. `actions/checkout@v7.0.1`
 2. `actions/setup-dotnet@v6.0.0` (dotnet 10.0.x)
-3. `dotnet publish source/App/olympiad-quizzer-net.Client/olympiad-quizzer-net.Client.csproj -c Release -o publish-out`
+3. `dotnet publish source/App/olympiad-quizzer-net.App.Client/olympiad-quizzer-net.App.Client.csproj -c Release -o publish-out`
 4. Post-publish fixups (PowerShell):
    - Rewrites `<base href>` in `index.html` to `/olympiad-quizzer-net/` (required for Blazor Router on a subpath)
    - Copies `index.html` → `404.html` (GitHub Pages serves 404.html on unknown routes; Blazor Router handles the rest client-side)
