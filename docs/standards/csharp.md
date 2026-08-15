@@ -129,4 +129,27 @@ private void BuildQuiz()
 Prefer clear method names over inline comments. File length is a smell above ~300 lines; method
 length above ~40. Not hard limits — prompts to look.
 
-**No regions.**
+## Regions
+
+`#region` is permitted where it earns its place — most often grouping a large test class by
+concern. It is C#'s tool for the job, and the tooling collapses it, navigates it and understands it.
+
+**Do not overuse it.** A region around every method is noise. A region hiding a 400-line class is
+worse than noise: it conceals exactly the length signal above.
+
+**A comment banner is never an acceptable substitute for a region.** Not this, not any variation:
+
+```csharp
+// ────────────────────────────────────────────────────────────────
+//  Production-bank assertions
+// ────────────────────────────────────────────────────────────────
+```
+
+That is a Python or JavaScript idiom in a language that has the feature natively. It collapses in
+no editor, means nothing to any tool, and drifts out of sync silently. If the grouping is worth
+declaring, `#region` declares it. If it is not worth a region, it is not worth a banner either —
+and if the class needs that much grouping to stay readable, re-read the mirror rule in
+[testing-tiers.md](testing-tiers.md): it is probably telling you the class does too much.
+
+This rule previously read "No regions", which was read as "use comment banners instead" — the
+opposite of the intent. Both halves are stated here so the same misreading is not available again.

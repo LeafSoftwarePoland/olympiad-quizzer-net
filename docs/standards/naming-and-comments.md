@@ -14,8 +14,13 @@ alt text: **Polish**.
 |---|---|---|
 | Client routes — the path a student reads in the address bar | **Polish** | user-facing text |
 | API routes — `/v1/questions`, `/v1/filters` | **English** | read by a program, and a frozen wire contract |
+| API error payloads | **machine codes**, never prose | read by a program; the client maps each code to Polish |
 
 They are consistent with the audience rule, not with each other. Do not "make them match".
+
+Error codes are constants in the Domain project, so the API emits them and the client maps them
+against the same definitions — a mismatch is a compile error rather than a mystery on screen. See
+[api.md](api.md) § Error handling.
 
 Tag identifiers (`category[]`, `algorithms[]` values): **Polish snake_case, Latin letters only,
 diacritics dropped** (ą→a, ę→e, ó→o, ś→s, ł→l, ź/ż→z, ć→c, ń→n) — `sledzenie_kodu`, `zlozonosc`.
@@ -58,6 +63,8 @@ same simple name and a `using` alias would be less clear than the qualification.
 - `// TODO` / `// FIXME` / `// HACK` not cleaned up before commit
 - Commented-out code. Git remembers.
 - XML doc comments. They rot, must be maintained, and add nothing for internal code.
+- **Comment banners used as section dividers** — ASCII rules, box-drawing lines, `=====` headers.
+  C# has `#region`; see [csharp.md](csharp.md) § Regions.
 
 ### Naming over comments
 

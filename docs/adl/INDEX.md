@@ -1,6 +1,8 @@
 # Architecture Decision Log
 
-Last updated: 2026-08-14 — full cleanup. Bodies rewritten, amendments folded in, dead decisions deleted, log renumbered with no gaps. From this point on, amendments resume as the normal way to change an ADR.
+Last updated: 2026-08-15 — ADR-031 and ADR-032 added; ADR-012, ADR-023 and ADR-029 amended.
+
+The 2026-08-14 cleanup rewrote bodies, folded in amendments, deleted dead decisions and renumbered the log with no gaps. That was a one-time hard fix. **Amendments are now the only way to change an ADR.**
 
 ## How to change an ADR
 
@@ -48,6 +50,8 @@ ADRs state **WHAT** was decided and **WHY** — not **HOW**. No class, method, i
 | [ADR-028](ADR-028-robots-txt-two-origins.md) | Crawler control across two origins | Accepted | 2026-08-13 |
 | [ADR-029](ADR-029-question-storage-sqlite.md) | Question storage — SQLite in `data/`, Dapper | Accepted | 2026-08-14 |
 | [ADR-030](ADR-030-api-composition-controllers.md) | API composition — controllers, versioned routes, startup extensions | Accepted | 2026-08-14 |
+| [ADR-031](ADR-031-api-error-handling-boundary.md) | API error handling — two layers and a coded contract | Accepted | 2026-08-15 |
+| [ADR-032](ADR-032-grading-dispatch-by-type.md) | Grading dispatches by question type, one unit per type | Accepted | 2026-08-15 |
 
 ## Open decisions
 

@@ -132,6 +132,30 @@ Server-side filtering makes offline mode significantly more complex. Deferred un
 
 ---
 
+### F-14 — Graceful failure handling (toasts, error screens, coded messages)
+
+**Status:** active  
+**ADR:** ADR-031, ADR-012, ADR-013, ADR-025
+
+A child who hits a failure gets a comprehensible Polish message and an obvious next step — never a blank screen, a raw error, or a spinner that never resolves. The purpose is not robustness for its own sake: a confused or frustrated student stops practising, and this app has no teacher standing next to it to explain what went wrong.
+
+Covers:
+
+- **Toasts** for recoverable problems the student can act on or ignore.
+- **Server-unreachable screen** when the API is down or still waking (ADR-013, ADR-019 — cold start reaches ~35 s, so "slow" must not read as "broken").
+- **Empty result** handled as a normal outcome, not an error — "no questions for these filters", and the quiz refuses to start rather than starting empty (ADR-025).
+- **Coded errors mapped to Polish client-side.** The API returns a stable machine code, the client owns every string a student reads (ADR-012 amendment), with a generic fallback for an unrecognised code. Today one code exists, `UNEXPECTED`, and the fallback shares its text:
+
+  > **Coś poszło nie tak.**
+  > Spróbuj ponownie wykonać ostatnią akcję. Jeżeli błąd nadal występuje, skontaktuj się proszę z twórcą aplikacji wraz z zrzutami ekranu.
+
+  Written for a ten-to-fourteen-year-old: plain register, and a next step rather than a dead end. A code is added only when a real failure needs its own message — see ADR-031.
+- **Nothing technical reaches the screen.** No exception type, message, stack or path (ADR-031).
+
+Toasts, the unreachable screen and empty-result handling ship today. The middleware-backed coded contract lands with ADR-031.
+
+---
+
 ## Changelog
 
 | Date | Change |
@@ -139,3 +163,4 @@ Server-side filtering makes offline mode significantly more complex. Deferred un
 | 2026-08-12 | Initial registry — F-01..F-13 seeded from plan and ADLs |
 | 2026-08-13 | F-03, F-10 marked active — delivered by v1.0 |
 | 2026-08-15 | ADR pointers remapped after the ADL renumber; F-04 and F-10 corrected to cite the filtering-contract ADR |
+| 2026-08-15 | F-14 added — graceful failure handling. Registers toast, unreachable-screen and empty-result behaviour that already shipped but was never recorded, plus the coded error contract from ADR-031 |

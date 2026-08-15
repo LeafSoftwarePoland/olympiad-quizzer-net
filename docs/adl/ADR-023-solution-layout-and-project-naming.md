@@ -68,3 +68,30 @@ Accepted cons:
 - Naming form details, acronym casing and the per-project settings list are enforced as coding standards, not restated here.
 - ADR-002 (the abstraction Domain owns), ADR-007 (why the serializer exception exists), ADR-029 (storage), ADR-022 (frontend folders sit inside the Presentation ring), ADR-027 (why the solution file is not renamed)
 - Acronym casing: [Framework Design Guidelines — capitalization conventions](https://learn.microsoft.com/dotnet/standard/design-guidelines/capitalization-conventions)
+
+## Amendment — 2026-08-15 — build-enforced Domain isolation, a non-ring folder, and Infrastructure's responsibility boundary
+
+**Overrides:** the Decision bullet stating that "one reflection-based test asserts the
+referenced-assembly set as a second line of defence".
+**Adds:** `source/Solution/`; the Infrastructure responsibility rule.
+
+- Domain's zero-dependency rule is enforced by an **MSBuild target in its own project file**, which
+  fails the build when a project or package reference is present. The reflection test is deleted.
+  Reason: it failed late (after a green build), could be removed by a test filter, had no
+  production counterpart, and amounted to asserting that the project file contains what the project
+  file contains. Platform mechanisms enforce build constraints; tests do not police configuration.
+- **New non-ring folder `source/Solution/`.** Holds test projects whose subject is the repository's
+  committed output — the question bank, the generated database, the machine-readable rule blocks —
+  rather than any production project's code. Such suites have no production counterpart, so the
+  one-counterpart rule excludes them from every tiered project.
+  Deviation is confined to two axes: a folder that is not a ring, and a tier outside L0–L3.
+  Everything else complies. Recorded as the single standing exception; another requires the same
+  justification, decided beforehand.
+- **Infrastructure does I/O and nothing else.** A persistence class reads and writes. It does not
+  validate and does not convert, because neither is its responsibility — it receives what is
+  already prepared. Connection-level faults it may handle; **data-level faults bubble**, because
+  interpreting them is a decision for a ring that knows what the data means.
+- The external is reached through a **thin, mockable seam**: the abstraction in Domain, the
+  implementation in Infrastructure. Consequence, and the reason this is recorded rather than left
+  implicit — Infrastructure becomes L0-testable above the seam, which was impossible while I/O and
+  logic were welded together in one class.

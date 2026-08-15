@@ -127,3 +127,43 @@ Accepted cons:
 - **Follow-up risk:** nothing yet asserts that every image referenced by the bank exists in `data/images/`. With the two in one folder the check is cheap and belongs in the integrity suite.
 - ADR-005 (no persistent disk — the constraint that rules out volume-mounting; revisit this ADR if the plan changes), ADR-007 (the record shape, the wire format and the integrity invariant), ADR-023 (the Infrastructure project is named for this engine), ADR-024 (normalisation rules the import must respect), ADR-013 (read-only posture — no write path to this store)
 - Injection safety: always parameterised, never interpolated.
+
+## Amendment — 2026-08-15 — the read path, the sync entry point, and a missing file in § Layout
+
+**Overrides:** nothing in the Decision text, which never specified how a query executes. Fills the
+gap it left.
+**Adds:** `data/schema.sql` to § Layout; the regeneration entry point.
+
+**Trigger.** The first implementation loaded the whole bank with one unfiltered query at
+construction and filtered it in memory. The three indexes in the schema were never used at read
+time — so § Considered's argument against flat JSON ("no indexes… stops being defensible the moment
+filtering gets more selective than a linear scan") was **untrue of the code that replaced it.** The
+storage engine was delivering constraints only.
+
+**Read path, in three steps:**
+
+1. **SQL filters, returning identifiers only.** Tag predicates execute in the database, so the
+   indexes are used and the ADR's stated motivation becomes true.
+2. **The shuffle stays in application code**, seeded. `ORDER BY RANDOM()` would move it into SQL and
+   read as simpler, but SQLite's random function **cannot be seeded** — that would destroy test
+   determinism and with it every assertion about draw order. ADR-025 pins *shuffle, then cap*
+   precisely because capping first makes the result deterministic by bank order; that rule needs a
+   test, and a test needs a seed.
+3. **Fetch only the selected rows.** At the cap of 30 that materialises 30 records rather than the
+   whole bank.
+
+Consequence worth stating: this keeps the logic most worth testing — filtering semantics, clamping,
+shuffle-then-cap — above the persistence seam and reachable without a database, which is what the
+ADR-023 amendment's seam exists to buy.
+
+**Regeneration has an entry point.** The sync routine previously had no production caller: its only
+callers were tests, so the workflow this ADR calls "part of a content change, not a separate chore"
+could not actually be performed. It is now a console tool in `source/Solution/`, beside the suites
+that validate the artefacts it produces. Defaults resolve relative to the repository root; paths may
+be overridden by argument; failure exits non-zero and prints the exception, because the audience is
+a developer and a stack trace is the most useful thing it can emit. That is the opposite of the
+API's rule against leaking technical detail, and deliberately so — different audience, different
+correct answer.
+
+**`data/schema.sql`** belongs in § Layout beside `questions.json`, `questions.db` and `images/`. It
+is required by § Schema and its lifecycle and exists on disk; the file list omitted it.

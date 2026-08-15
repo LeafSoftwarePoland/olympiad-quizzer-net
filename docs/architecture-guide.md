@@ -11,14 +11,19 @@ it, so a violation is a compile error rather than a review finding (ADR-023).
 
 | Layer | Project | Contents | Rules |
 |---|---|---|---|
-| Domain | `Core/olympiad-quizzer-net.Core.Domain` | question and answer types, grader, query and filter types, repository abstraction, session state and logic, serialization contract | References **nothing** — no project references, no package references. No I/O, no HTTP, no DI, no logging. One bounded exception: the platform JSON serializer in `Domain/Serialization` (ADR-023). |
+| Domain | `Core/olympiad-quizzer-net.Core.Domain` | question and answer types; the grading contract and its per-type units (ADR-032); query and filter types; the repository abstraction and the persistence seam (ADR-023); error-code constants (ADR-031); session state and logic; serialization contract | References **nothing** — no project references, no package references. No I/O, no HTTP, no DI, no logging. One bounded exception: the platform JSON serializer in `Domain/Serialization` (ADR-023). |
 | Test support | `Core/olympiad-quizzer-net.Core.Tests.Common` | tier constants, shared builders, fixtures, capturing loggers | References Domain. Used by two or more test projects. Ships nothing, carries no tier. |
-| Infrastructure | `Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite` | question storage, filtering, shuffling, DI extension | References Domain only. Reads `data/questions.db` with Dapper (ADR-029). |
-| Application / API | `App/olympiad-quizzer-net.App.API` | `Program` (class-based, non-partial), controllers under `Controllers/`, startup extensions under `Extensions/`, Dockerfile | References Domain + Infrastructure. Stateless, read-only (ADR-013). |
-| Presentation / Client | `App/olympiad-quizzer-net.App.Client` | Blazor WASM, feature folders, HTTP repository implementation, browser-storage services | References Domain only. HTTP is the Client's own infrastructure boundary. |
+| Infrastructure | `Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite` | question storage, filtering, shuffling, DI extension | References Domain only. Reads `data/questions.db` with Dapper (ADR-029). **I/O only** — no validation, no conversion; data-level faults bubble (ADR-023). |
+| Application / API | `App/olympiad-quizzer-net.App.API` | `Program` (class-based, non-partial), controllers under `Controllers/`, startup extensions under `Extensions/`, exception middleware, Dockerfile | References Domain + Infrastructure. Stateless, read-only (ADR-013). |
+| Presentation / Client | `App/olympiad-quizzer-net.App.Client` | Blazor WASM, feature folders, HTTP repository implementation, browser-storage services, error-code to Polish mapping | References Domain only. HTTP is the Client's own infrastructure boundary. |
 | Tests — Domain L0 | `Core/olympiad-quizzer-net.Core.Domain.L0` | Domain unit tests | References Domain + Tests.Common. Cannot touch the filesystem — enforced by the project graph. |
+| Tests — Infrastructure L0 | `Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite.L0` | logic above the persistence seam, seam mocked | References Domain + Infrastructure + Tests.Common. |
 | Tests — Infrastructure L1 | `Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite.L1` | storage tests against a real database file | References Domain + Infrastructure + Tests.Common. |
-| Tests — API L1 | `App/olympiad-quizzer-net.App.API.L1` | controller tests, hand-constructed | References Domain + Infrastructure + API + Tests.Common. |
+| Tests — API L0 | `App/olympiad-quizzer-net.App.API.L0` | controller tests with a mocked repository | References Domain + API + Tests.Common. |
+| Tests — API L1 | `App/olympiad-quizzer-net.App.API.L1` | controller tests, hand-constructed over real infrastructure | References Domain + Infrastructure + API + Tests.Common. |
+| Tests — API L2 | `App/olympiad-quizzer-net.App.API.L2` | whole application, real pipeline, over HTTP | References Domain + Infrastructure + API + Tests.Common. |
+| Tests — Integrity | `Solution/olympiad-quizzer-net.Solution.DataIntegrityTests` | the committed artefacts, not code | References Domain + Tests.Common. **`Solution` is not a ring** — the one recorded exception (ADR-023). |
+| Tooling | `Solution/olympiad-quizzer-net.Solution.BankSync` | console tool: regenerates `data/questions.db` from `data/questions.json`, prints the delta report | References Domain + Infrastructure. Not shipped. Run locally before committing a content change; CI runs it in check mode (ADR-029). |
 
 Reference graph, `.csproj` settings and the naming rule: [standards/projects-and-solution.md](standards/projects-and-solution.md).
 All code conventions: [standards/INDEX.md](standards/INDEX.md) — read every file it lists.
@@ -35,13 +40,21 @@ here for orientation only; where the two disagree, the standards win.
 
 | Level | Scope | Project |
 |---|---|---|
-| L0 — unit | One class or method. Every collaborator substituted. No filesystem, network, DI or host. | `Core/olympiad-quizzer-net.Core.Domain.L0` |
+| L0 — unit | One class or method. Every collaborator substituted, each also given a throwing case. No filesystem, network, DI or host. Any ring qualifies where collaborators can be substituted. | `Core/…Core.Domain.L0`, `Infrastructure/…SQLite.L0`, `App/…App.API.L0` |
 | L1 — in-app integration | Subject constructed **by hand** with real in-app layers over a real external. No `WebApplicationFactory`, no DI container, no middleware, no routing. | `Infrastructure/…SQLite.L1`, `App/…App.API.L1` |
-| L2 — full application | Whole app built with real registrations and the real middleware pipeline, driven over HTTP. | *not created* |
+| L2 — full application | Whole app built with real registrations and the real middleware pipeline, driven over HTTP. **Narrowly scoped** to what no lower tier can reach: the exception-middleware chain, routing, model binding, content negotiation, CORS preflight. | `App/…App.API.L2` |
 | L3 — end-to-end | Browser-driven against a real backend. | *not created* |
+| Integrity | The repository's committed **output** — question bank, generated database, rule blocks. No code under test, no production counterpart. | `Solution/…Solution.DataIntegrityTests` |
 
-L2 and L3 are **deliberately not created**. Do not tag anything with them, and do not reach for a
-test host because it is convenient — a `WebApplicationFactory` in an L1 project is a defect.
+**L2 exists because a rule-derived obligation landed in it**, not because a host is convenient.
+Exception middleware is unreachable at L1 by construction, so proving the chain end to end requires
+the full pipeline. A `WebApplicationFactory` in an L1 project is still a defect.
+
+**L3 is deliberately not created.** Do not tag anything with it.
+
+The derivation that produced L2, and the six-point test that justified the Integrity exception, are
+in `docs/standards/INDEX.md` § How these rules compose. Read it before proposing a new tier or a
+new exception.
 
 Every test project is in `OlympiadQuizzer.slnx`, so `dotnet test OlympiadQuizzer.slnx` runs every
 level in one invocation and CI needs no per-project step.

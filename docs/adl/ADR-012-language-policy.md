@@ -43,3 +43,24 @@ Accepted cons:
 - Full tag vocabulary: `docs/tags.md`
 - If localisation is ever wanted, the platform's string-localiser abstraction is additive and needs no rewrite.
 - Predecessor convention: `c:\Repositories\py-oij-quizzer\CLAUDE.md`
+
+## Amendment — 2026-08-15 — API error payloads carry codes, not prose
+
+**Adds:** the language of API error responses.
+
+**Problem it answers:** the API had begun returning Polish sentences. The API is not user-facing —
+it is read by a program — so Polish prose crossing that boundary put user-facing copy in the wrong
+ring, made rewording a message a backend redeploy, and split responsibility for what a student
+reads across two independently deployed projects.
+
+- API error responses carry a **stable machine code**, never a translated sentence.
+- Codes are constants in the Domain project. The API emits them, the client maps them, both compile
+  against the same definitions — a mismatch is a compile error, not a blank screen.
+- The client owns every Polish string, as it already does for all other user-facing text.
+- The client keeps a generic fallback for an unrecognised code, which also covers version skew
+  between the two deployables.
+- **Rejected:** Polish message from the API. Simpler, but misplaces UI copy and couples message
+  wording to a backend release.
+- The tag-vocabulary exception above does **not** extend to this. Tags are an open-ended vocabulary
+  where mid-flight conversion would cost real complexity; error codes are a small closed set, so
+  the argument that justified that exception does not transfer.

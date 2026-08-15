@@ -12,6 +12,7 @@ What lives in `docs/` and how to maintain it.
 | Functionality registry | `docs/functionalities.md` | Registry of user-facing features with status and ADR pointers | See file header |
 | Glossary | `docs/Glossary.md` | Project-specific terms. Authoritative — do not duplicate in pipeline artifacts. | — |
 | Competition rules | `docs/rules/` | Machine-readable + human-readable competition rules per olympiad | `docs/rules/README.md` |
+| Tag vocabulary | `docs/tags.md` | The controlled `category[]` / `algorithms[]` values. Authoritative — the integrity suite validates the bank against it | See file header |
 | Architecture guide | `docs/architecture-guide.md` | Layer definitions, test levels, document hierarchy | Self-describing |
 | Coding standards | `docs/standards/` | How code is written and reviewed. Enforced at every PR. | `docs/standards/INDEX.md` |
 
