@@ -27,7 +27,7 @@ public sealed class SqliteQuestionRepositoryTests
     private const int    _absentYear        = 1999;
 
     private const int _poolLargerThanMaxLimit = 40;
-    private const int _poolSmallerThanLimit   = 10;
+    private const int _poolLargerThanLimit    = 10;
     private const int _limitWithinRange       = 5;
     private const int _limitAboveMaximum      = 999;
     private const int _negativeLimit          = -5;
@@ -40,14 +40,25 @@ public sealed class SqliteQuestionRepositoryTests
     private const int _distinctCategoryCount  = 2;
     private const int _distinctAlgorithmCount = 2;
 
-    // id=1 -> category=[rekurencja],         algorithms=[BFS]
-    // id=2 -> category=[grafy],              algorithms=[DFS]
-    // id=3 -> category=[rekurencja, grafy],  algorithms=[BFS, DFS]
+    // The store hands back tag columns as raw JSON text, so the fixture has to speak that shape.
+    // Built from the tag constants rather than written out, so a rename cannot leave the two
+    // disagreeing while every test still passes.
     private static readonly QuestionCandidate[] _threeCandidates =
     [
-        new QuestionCandidate { Id = 1, Category = "[\"rekurencja\"]",             Algorithms = "[\"BFS\"]" },
-        new QuestionCandidate { Id = 2, Category = "[\"grafy\"]",                  Algorithms = "[\"DFS\"]" },
-        new QuestionCandidate { Id = 3, Category = "[\"rekurencja\",\"grafy\"]",   Algorithms = "[\"BFS\",\"DFS\"]" }
+        new QuestionCandidate
+        {
+            Id = 1, Category = TagJson(_categoryRecursion), Algorithms = TagJson(_algorithmBfs)
+        },
+        new QuestionCandidate
+        {
+            Id = 2, Category = TagJson(_categoryGraphs), Algorithms = TagJson(_algorithmDfs)
+        },
+        new QuestionCandidate
+        {
+            Id = 3,
+            Category   = TagJson(_categoryRecursion, _categoryGraphs),
+            Algorithms = TagJson(_algorithmBfs, _algorithmDfs)
+        }
     ];
 
     #region Constructor
@@ -169,7 +180,7 @@ public sealed class SqliteQuestionRepositoryTests
     public async Task GetAsync_PreservesLimit_WhenLimitIsWithinRange()
     {
         // Arrange
-        Mock<IQuestionStore> store = StoreReturningCandidates(UntaggedCandidates(_poolSmallerThanLimit));
+        Mock<IQuestionStore> store = StoreReturningCandidates(UntaggedCandidates(_poolLargerThanLimit));
         (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
@@ -662,8 +673,18 @@ public sealed class SqliteQuestionRepositoryTests
                 new FilterOption { Value = _knownYear.ToString(),  Count = 2 },
                 new FilterOption { Value = _secondYear.ToString(), Count = 1 }
             ],
-            CategoryJsons  = ["[\"rekurencja\"]", "[\"grafy\"]", "[\"rekurencja\",\"grafy\"]"],
-            AlgorithmJsons = ["[\"BFS\"]",        "[\"DFS\"]",   "[\"BFS\",\"DFS\"]"]
+            CategoryJsons =
+            [
+                TagJson(_categoryRecursion),
+                TagJson(_categoryGraphs),
+                TagJson(_categoryRecursion, _categoryGraphs)
+            ],
+            AlgorithmJsons =
+            [
+                TagJson(_algorithmBfs),
+                TagJson(_algorithmDfs),
+                TagJson(_algorithmBfs, _algorithmDfs)
+            ]
         };
     }
 
@@ -679,8 +700,8 @@ public sealed class SqliteQuestionRepositoryTests
             Content       = "[{\"Type\":\"text\",\"Text\":\"Q?\"}]",
             Options       = "[\"A\",\"B\"]",
             CorrectAnswer = "[\"A\"]",
-            Category      = "[\"rekurencja\"]",
-            Algorithms    = "[\"BFS\"]",
+            Category      = TagJson(_categoryRecursion),
+            Algorithms    = TagJson(_algorithmBfs),
             Points        = 1,
             PartialCredit = 0
         };
@@ -700,11 +721,16 @@ public sealed class SqliteQuestionRepositoryTests
         return (new SqliteQuestionRepository(store.Object, shuffler.Object, logger), logger);
     }
 
+    private static string TagJson(params string[] tags)
+    {
+        return "[" + string.Join(",", tags.Select(tag => $"\"{tag}\"")) + "]";
+    }
+
     private static Mock<IQuestionStore> StoreReturningCandidates(
-        IReadOnlyList<QuestionCandidate> candidates, BankSummary summary = null)
+        IReadOnlyList<QuestionCandidate> candidates)
     {
         Mock<IQuestionStore> store = new(MockBehavior.Loose);
-        store.Setup(s => s.LoadSummary()).Returns(summary ?? DefaultSummary());
+        store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
         store.Setup(s => s.SelectCandidates(
                 It.IsAny<IReadOnlyCollection<string>>(),
                 It.IsAny<IReadOnlyCollection<int>>()))

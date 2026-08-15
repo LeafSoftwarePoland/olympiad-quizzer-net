@@ -60,11 +60,11 @@ public sealed class QuestionBankIntegrityTests
     #region Production bank assertions
 
     [Fact]
-    public void ProductionBank_ContainsQuestions_WhenLoaded()
+    public void ProductionBank_ContainsQuestions_WhenTheCommittedBankIsRead()
     {
         // Arrange & Act — every other assertion in this class collects violations and expects an
-        // empty list, which an empty bank satisfies trivially. This is the guard that stops a
-        // truncated or emptied questions.json passing the whole suite.
+        // empty list, which an emptied bank satisfies trivially. This guard catches that case only:
+        // a bank truncated to a handful of questions still passes everything here.
         List<Question> questions = LoadProductionBank();
 
         // Assert
@@ -159,7 +159,7 @@ public sealed class QuestionBankIntegrityTests
         // Assert
         Assert.True(
             violations.Count == 0,
-            $"Found {violations.Count} question(s) whose correctAnswer shape contradicts ADR-024:{Environment.NewLine}{string.Join(Environment.NewLine, violations)}");
+            $"Found {violations.Count} question(s) whose correctAnswer shape contradicts the declared shape for its type:{Environment.NewLine}{string.Join(Environment.NewLine, violations)}");
     }
 
     [Fact]
