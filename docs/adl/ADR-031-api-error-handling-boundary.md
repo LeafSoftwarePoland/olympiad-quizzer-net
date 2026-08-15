@@ -54,7 +54,13 @@ the *unknown* never escapes unshaped. An empty catch in an action defeats both.
 ### The contract
 
 Every failure **the application itself emits** carries a **stable machine code** and the framework's
-request identifier. Nothing else.
+request identifier, as plain JSON. Nothing else.
+
+**Not `ProblemDetails`.** Its `title` and `type` are framework-authored English, and the client
+renders neither — it reads the code and maps to Polish. Two shapes on the wire cost the client
+nothing, because its rule is one field read with a fallback: absent `code` means the generic
+message, which is equally the right answer for a framework rejection and for a code it does not
+recognise.
 
 **The contract is scoped to our own client**, and deliberately does not extend to requests that
 client cannot produce. A malformed request is rejected by the framework before application code

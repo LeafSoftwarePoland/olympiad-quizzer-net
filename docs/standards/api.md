@@ -90,11 +90,25 @@ see [csharp.md](csharp.md) § Error handling.
 
 ### The error contract
 
-One response shape for every failure **the application itself emits**:
+One response shape for every failure **the application itself emits** — plain JSON, two fields:
 
-- a **stable machine code**
-- the framework's request identifier, so a report can be traced to a log line
-- **nothing else**
+```json
+{ "code": "UNEXPECTED", "requestId": "00-a1b2c3..." }
+```
+
+**Nothing else.** Not `ProblemDetails`: its `title` and `type` are English strings the framework
+authors, and the client displays none of them — it reads `code` and maps to Polish. Carrying them
+would widen the payload with text nobody renders, on the one boundary where the rule is that
+nothing technical crosses.
+
+**A framework 400 has no `code`, and that is by design.** The client's rule is a single read: *look
+for `code`; if it is absent, show the generic message.* So the framework's rejection of a malformed
+request falls through to the same fallback as an unrecognised code. One field, one fallback — not
+two parsers.
+
+**The response is thin because the log is complete.** Both handling layers record the exception,
+the parameters and everything else identifying the request; `requestId` is the thread from a
+student's report back to that log line. Detail lives in the log, never on the wire.
 
 **Scope — read this before adding a code.** The contract exists to serve *our client*: a failure
 arrives, the client maps the code to Polish, the student sees something useful. It does not extend

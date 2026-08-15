@@ -67,7 +67,7 @@ Note the consequence, because it is the point: this derivation **created work th
 The mirror rule (one production file, one test file) exists as a **complexity meter**, not only for navigation. Watch what it produced here twice:
 
 - One repository class had **four** test files → the meter says four responsibilities → split it → the split *reveals* a persistence seam → a mockable seam makes **Infrastructure L0 possible**, which the tier rules always permitted but nothing had triggered. A file-naming rule surfaced an architecture improvement.
-- One grader class had **six** test files → split → six static classes → statics cannot carry a contract → strategy plus dependency injection → each grader independently mockable → **controller L0 tests become meaningful**. A file-naming rule ended at a dependency-injection decision.
+- One grader class had **six** test files → split → six static classes → statics cannot carry a contract → strategy plus dependency injection → each grader independently mockable → **the browser-side session and summary gain testable seams**. A file-naming rule ended at a dependency-injection decision. (Grading is client-side, so the callers that benefit are components, not controllers — an earlier version of this line said "controller L0 tests" and was wrong.)
 
 If a rule here feels like bureaucracy, you are probably about to ignore a signal.
 

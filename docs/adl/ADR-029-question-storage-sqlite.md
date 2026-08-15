@@ -142,8 +142,16 @@ storage engine was delivering constraints only.
 
 **Read path, in three steps:**
 
-1. **SQL filters, returning identifiers only.** Tag predicates execute in the database, so the
-   indexes are used and the ADR's stated motivation becomes true.
+1. **SQL narrows on what it indexes, returning identifiers plus the tag columns.** `stage`, `year`
+   and `type` are indexed and become `WHERE` predicates. `category` and `algorithms` are **not
+   indexed** — they are JSON arrays in a text column — so they come back as data and are matched in
+   application code.
+
+   Stated plainly because an earlier draft of this amendment claimed all tag predicates use
+   indexes, which was false for the two that matter most: `category` is the mandatory filter. A
+   normalised tag table would make them indexable and is the answer **if** the bank ever outgrows a
+   scan. At the current size a scan is free, and pushing the OR-within/AND-across semantics into
+   SQL would only move the logic most worth unit-testing out of reach.
 2. **The shuffle stays in application code**, seeded. `ORDER BY RANDOM()` would move it into SQL and
    read as simpler, but SQLite's random function **cannot be seeded** — that would destroy test
    determinism and with it every assertion about draw order. ADR-025 pins *shuffle, then cap*
