@@ -20,12 +20,12 @@ dotnet run --project source/App/olympiad-quizzer-net.App.API
 
 The API listens on `http://localhost:10000` by default. Routes: `GET /healthz`, `GET /v1/filters`, `GET /v1/questions`.
 
-In development mode (the default for `dotnet run`), the API loads `appsettings.Development.json`, which points at a small 6-question dev bank inside the API project instead of the full production bank. Keeps startup fast and covers all three live question types — single choice, multiple choice, short answer.
+In development mode (the default for `dotnet run`), the API loads `appsettings.Development.json`, which points `QuestionBank:DatabasePath` at the small 6-question dev bank in `data/dev/` instead of the full production bank. Keeps startup fast and covers all three live question types — single choice, multiple choice, short answer.
 
 To use the full bank locally, delete or rename `appsettings.Development.json`, or override the path (relative paths resolve against the build output directory, not the repo root):
 
 ```
-dotnet run --project source/App/olympiad-quizzer-net.App.API -- --QuestionBank:FilePath="$(pwd)/data/questions.db"
+dotnet run --project source/App/olympiad-quizzer-net.App.API -- --QuestionBank:DatabasePath="$(pwd)/data/questions.db"
 ```
 
 **2. Run the frontend**
@@ -42,7 +42,7 @@ Opens at `http://localhost:<port>`. The frontend reads `wwwroot/appsettings.json
 dotnet test OlympiadQuizzer.slnx -c Release
 ```
 
-Runs L0 (unit) and L1 (integration) in one invocation. L1 includes bank-integrity checks against the real bank in `data/`, and asserts that the committed database was regenerated from the committed JSON. All other tests use their own fixture files.
+Runs all four tiers across seven test projects in one invocation: **L0** (unit, collaborators substituted), **L1** (integration, no test host), **L2** (whole app over HTTP) and **Integrity** (the committed artefacts themselves, not code). Integrity validates `data/questions.json` against the schema, the tag vocabulary and the ADR-007 answer invariants; L1 asserts the committed database was regenerated from the committed JSON. All other tests use their own fixture files.
 
 ## The question bank
 
@@ -52,14 +52,16 @@ Runs L0 (unit) and L1 (integration) in one invocation. L1 includes bank-integrit
 |---|---|
 | `data/questions.json` | **Authored source of truth.** Hand-edited, diff-reviewable. What a content PR is reviewed against. |
 | `data/questions.db` | **Generated SQLite bank.** What the API actually reads. |
+| `data/schema.sql` | The schema definition. The generator applies it to an empty file; there is no runtime migration. |
 | `data/images/` | Question images, named after the question `id`. |
+| `data/dev/` | Six-question dev fixture — `questions.json` plus its generated `.db`. Not integrity-checked. |
 
 A content change edits the JSON and regenerates the database in the same commit. The sync is reconciling — it reports added, changed and removed questions by `id`, and that report is how a binary artefact stays reviewable. CI fails if the two disagree. See [ADR-029](docs/adl/ADR-029-question-storage-sqlite.md).
 
 ## Project structure
 
 ```
-data/                                       — question bank: questions.json, questions.db, images/
+data/                                       — question bank: questions.json, questions.db, schema.sql, images/, dev/
 source/
   Core/
     olympiad-quizzer-net.Core.Domain/         — domain types, grading units, session logic, abstractions, error codes
