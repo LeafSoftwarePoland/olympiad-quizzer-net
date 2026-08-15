@@ -344,7 +344,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "jednakowych liter?",
       "16"
     ],
     "points": 1,
@@ -741,7 +740,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "Ile dzielników ma liczba 240?",
       "20"
     ],
     "points": 1,
@@ -753,7 +751,7 @@
       },
       {
         "type": "text",
-        "text": "m. Podzielmy dzielniki na „małe” (mniejsze od √/n) oraz duże (większe od √/n). Każdemu małemu dzielnikowi odpowiada unikalny duży dzielnik. Dla liczb będących kwadratami liczby naturalnej mamy jeszcze dzielnik √/n. Liczba 240 nie jest kwadratem liczby naturalnej i ma następujące małe dzielniki 1, 2, 3, 4, 5, 6, 8, 10, 12, 15 (10 dzielników). A zatem jest też 10 dużych dzielników: 240, 120, 80, 60, 48, 40, 32, 24, 20 oraz 16, czyli w sumie 20 dzielników. (Sposób 2) Rozkładamy liczbę 240 na czynniki pierwsze: 240 = 2⁴ ·3·5. Każdy dzielnik liczby 240 musi więc być postaci: 2훼· 3훽· 5훾, gdzie 훼∈{0, 1, 2, 3, 4}, 훽∈{0, 1}, 훾∈{0, 1}. Ponieważ każda liczba ma unikalny rozkład na czynniki pierwsze oraz każdy rozkład na czynniki pierwsze deﬁniuje unikalną liczbę, jest 5 · 2 · 2 = 20 dzielników."
+        "text": "m. Podzielmy dzielniki na „małe” (mniejsze od √/n) oraz duże (większe od √/n). Każdemu małemu dzielnikowi odpowiada unikalny duży dzielnik. Dla liczb będących kwadratami liczby naturalnej mamy jeszcze dzielnik √/n. Liczba 240 nie jest kwadratem liczby naturalnej i ma następujące małe dzielniki 1, 2, 3, 4, 5, 6, 8, 10, 12, 15 (10 dzielników). A zatem jest też 10 dużych dzielników: 240, 120, 80, 60, 48, 40, 32, 24, 20 oraz 16, czyli w sumie 20 dzielników. (Sposób 2) Rozkładamy liczbę 240 na czynniki pierwsze: 240 = 2⁴ ·3·5. Każdy dzielnik liczby 240 musi więc być postaci: 2𝛼· 3𝛽· 5𝛾, gdzie 𝛼∈{0, 1, 2, 3, 4}, 𝛽∈{0, 1}, 𝛾∈{0, 1}. Ponieważ każda liczba ma unikalny rozkład na czynniki pierwsze oraz każdy rozkład na czynniki pierwsze deﬁniuje unikalną liczbę, jest 5 · 2 · 2 = 20 dzielników."
       }
     ]
   },
@@ -969,7 +967,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "dwukrotnie?",
       "8"
     ],
     "points": 1,
@@ -3244,7 +3241,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "podróż skoczka?",
       "10"
     ],
     "points": 1,
@@ -3769,7 +3765,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "najmniej raz) podciąg abc?",
       "233"
     ],
     "points": 1,
@@ -5794,7 +5789,7 @@
     "explanation": [
       {
         "type": "text",
-        "text": "Funkcja oblicza wartość funkcji 휙Eulera, czyli liczbę liczb względnie pierwszych z n. Istnieje wzór na obliczenie wartości funkcji na podstawie rozkładu na czynniki pierwsze. Możliwe jest również uruchomienie powyższego programu (po własnoręcznej implementacji algorytmu Euklidesa na obliczanie NWD), wtedy wykona się w rozsądnym czasie (chociaż nieco dłuższym niż kilka sekund)."
+        "text": "Funkcja oblicza wartość funkcji 𝜙Eulera, czyli liczbę liczb względnie pierwszych z n. Istnieje wzór na obliczenie wartości funkcji na podstawie rozkładu na czynniki pierwsze. Możliwe jest również uruchomienie powyższego programu (po własnoręcznej implementacji algorytmu Euklidesa na obliczanie NWD), wtedy wykona się w rozsądnym czasie (chociaż nieco dłuższym niż kilka sekund)."
       },
       {
         "type": "text",
@@ -6008,7 +6003,7 @@
     "explanation": [
       {
         "type": "text",
-        "text": "2 560 = 256 · 10 = 2⁸ · 2 · 5 = 2⁹ · 5. Dowolny dzielnik tej liczby jest postaci 2훼· 5훽, gdzie 훼∈{0, 1, . . . , 9} oraz 훽∈{0, 1}. Każda kombinacja (훼, 훽) prowadzi do uzyskania innego dzielnika, jest więc 20 różnych dzielników. Spośród nich 1, 2, 4, 5, 8, 10, 16, 20 są mniejsze lub równe 25."
+        "text": "2 560 = 256 · 10 = 2⁸ · 2 · 5 = 2⁹ · 5. Dowolny dzielnik tej liczby jest postaci 2𝛼· 5𝛽, gdzie 𝛼∈{0, 1, . . . , 9} oraz 𝛽∈{0, 1}. Każda kombinacja (𝛼, 𝛽) prowadzi do uzyskania innego dzielnika, jest więc 20 różnych dzielników. Spośród nich 1, 2, 4, 5, 8, 10, 16, 20 są mniejsze lub równe 25."
       }
     ]
   },
@@ -7028,7 +7023,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "pole początkowe.",
       "18"
     ],
     "points": 1,
@@ -7295,7 +7289,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "XCIX.",
       "431"
     ],
     "points": 1,
@@ -7430,7 +7423,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "pokazano na rysunku poniżej.",
       "8"
     ],
     "points": 1,
@@ -8213,7 +8205,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "ją w systemie trójkowym?",
       "16"
     ],
     "points": 1,
@@ -8917,7 +8908,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "cyfra?",
       "5"
     ],
     "points": 1,
@@ -9071,7 +9061,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "jest równy przynajmniej 30?",
       "23"
     ],
     "points": 1,
@@ -9129,7 +9118,6 @@
     ],
     "options": [],
     "correctAnswer": [
-      "istnieje?",
       "8"
     ],
     "points": 1,
