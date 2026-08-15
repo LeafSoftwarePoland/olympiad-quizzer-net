@@ -280,6 +280,27 @@ pre code {
     max-width: 70ch;
 }
 
+/* Coded API failures. Same shape as .error-panel so a student meets one visual
+   language for "something went wrong", whichever layer produced it. */
+.api-error {
+    background: #1a0000;
+    border: 1px solid var(--verdict-red);
+    border-left: 4px solid var(--verdict-red);
+    color: var(--verdict-red);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+    max-width: 70ch;
+}
+
+.api-error p {
+    margin: 0;
+}
+
+.api-error p + p {
+    margin-top: 0.5rem;
+    color: var(--text);
+}
+
 .select-input {
     background: var(--bg-code);
     border: 1px solid var(--border);

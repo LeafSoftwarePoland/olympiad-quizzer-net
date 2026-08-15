@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using Moq;
 using OlympiadQuizzer.Core.Domain.Queries;
@@ -9,93 +11,58 @@ using OlympiadQuizzer.Infrastructure.SQLite.Sqlite;
 
 namespace OlympiadQuizzer.Infrastructure.SQLite.L0.Sqlite;
 
-/// <summary>
-/// L0 tests for SqliteQuestionRepository — all I/O mocked via IQuestionStore.
-/// Covers: limit clamping, tag matching, shuffle ordering, seam-exception bubbling,
-/// unknown-value warnings, cached filter options, and cancellation.
-/// </summary>
 [Trait(TestTiers.Tier, TestTiers.L0)]
 public sealed class SqliteQuestionRepositoryTests
 {
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+    private const string _categoryRecursion = "rekurencja";
+    private const string _categoryGraphs    = "grafy";
+    private const string _algorithmBfs      = "BFS";
+    private const string _algorithmDfs      = "DFS";
+    private const string _absentTag         = "unknownTag";
+    private const string _knownStage        = "E1";
+    private const string _secondStage       = "E2";
+    private const string _absentStage       = "UNKNOWN_STAGE";
+    private const int    _knownYear         = 2023;
+    private const int    _secondYear        = 2024;
+    private const int    _absentYear        = 1999;
 
-    // Three base candidates used across most tests.
-    // id=1 → category=["rekurencja"],         algorithms=["BFS"]
-    // id=2 → category=["grafy"],              algorithms=["DFS"]
-    // id=3 → category=["rekurencja","grafy"], algorithms=["BFS","DFS"]
+    private const int _poolLargerThanMaxLimit = 40;
+    private const int _poolSmallerThanLimit   = 10;
+    private const int _limitWithinRange       = 5;
+    private const int _limitAboveMaximum      = 999;
+    private const int _negativeLimit          = -5;
+    private const int _generousLimit          = 10;
+    private const int _shufflePoolSize        = 5;
+    private const int _limitBelowPoolSize     = 3;
+
+    private const int _distinctStageCount     = 2;
+    private const int _distinctYearCount      = 2;
+    private const int _distinctCategoryCount  = 2;
+    private const int _distinctAlgorithmCount = 2;
+
+    // id=1 -> category=[rekurencja],         algorithms=[BFS]
+    // id=2 -> category=[grafy],              algorithms=[DFS]
+    // id=3 -> category=[rekurencja, grafy],  algorithms=[BFS, DFS]
     private static readonly QuestionCandidate[] _threeCandidates =
     [
-        new QuestionCandidate { Id = 1, Category = "[\"rekurencja\"]",        Algorithms = "[\"BFS\"]"       },
-        new QuestionCandidate { Id = 2, Category = "[\"grafy\"]",             Algorithms = "[\"DFS\"]"       },
-        new QuestionCandidate { Id = 3, Category = "[\"rekurencja\",\"grafy\"]", Algorithms = "[\"BFS\",\"DFS\"]" }
+        new QuestionCandidate { Id = 1, Category = "[\"rekurencja\"]",             Algorithms = "[\"BFS\"]" },
+        new QuestionCandidate { Id = 2, Category = "[\"grafy\"]",                  Algorithms = "[\"DFS\"]" },
+        new QuestionCandidate { Id = 3, Category = "[\"rekurencja\",\"grafy\"]",   Algorithms = "[\"BFS\",\"DFS\"]" }
     ];
 
-    private static BankSummary DefaultSummary() => new()
-    {
-        TotalCount     = 3,
-        Stages         = [new FilterOption { Value = "E1", Count = 2 }, new FilterOption { Value = "E2", Count = 1 }],
-        Years          = [new FilterOption { Value = "2023", Count = 2 }, new FilterOption { Value = "2024", Count = 1 }],
-        CategoryJsons  = ["[\"rekurencja\"]", "[\"grafy\"]", "[\"rekurencja\",\"grafy\"]"],
-        AlgorithmJsons = ["[\"BFS\"]",        "[\"DFS\"]",   "[\"BFS\",\"DFS\"]"]
-    };
-
-    private static QuestionRow MinimalRow(int id, string type = "single") => new()
-    {
-        Id           = id,
-        Olympiad     = "OIJ",
-        Stage        = "E1",
-        Year         = 2023,
-        Type         = type,
-        Content      = "[{\"Type\":\"text\",\"Text\":\"Q?\"}]",
-        Options      = "[\"A\",\"B\"]",
-        CorrectAnswer = "[\"A\"]",
-        Category     = "[\"rekurencja\"]",
-        Algorithms   = "[\"BFS\"]",
-        Points       = 1,
-        PartialCredit = 0
-    };
-
-    /// <summary>Builds a repository with the given mocks and a no-op shuffler unless provided.</summary>
-    private static (SqliteQuestionRepository Repo, CapturingLogger<SqliteQuestionRepository> Logger)
-        Build(Mock<IQuestionStore> store, Mock<IShuffler> shuffler = null)
-    {
-        var logger = new CapturingLogger<SqliteQuestionRepository>();
-        shuffler ??= new Mock<IShuffler>();
-        return (new SqliteQuestionRepository(store.Object, shuffler.Object, logger), logger);
-    }
-
-    private static Mock<IQuestionStore> StoreReturningCandidates(
-        IReadOnlyList<QuestionCandidate> candidates, BankSummary summary = null)
-    {
-        var store = new Mock<IQuestionStore>(MockBehavior.Loose);
-        store.Setup(s => s.LoadSummary()).Returns(summary ?? DefaultSummary());
-        store.Setup(s => s.SelectCandidates(
-                It.IsAny<IReadOnlyCollection<string>>(),
-                It.IsAny<IReadOnlyCollection<int>>()))
-            .Returns(candidates);
-        store.Setup(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>()))
-            .Returns((IReadOnlyList<int> ids) =>
-                ids.Select(id => MinimalRow(id)).ToList());
-        return store;
-    }
-
-    // -------------------------------------------------------------------------
-    // Constructor: LoadSummary called once at construction
-    // -------------------------------------------------------------------------
+    #region Constructor
 
     [Fact]
     public void Constructor_CallsLoadSummaryExactlyOnce_WhenCreated()
     {
         // Arrange
-        var store = new Mock<IQuestionStore>(MockBehavior.Strict);
+        Mock<IQuestionStore> store = new(MockBehavior.Strict);
         store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
 
         // Act
         Build(store);
 
-        // Assert — Strict mock would throw if LoadSummary called more than set-up times
+        // Assert
         store.Verify(s => s.LoadSummary(), Times.Once);
     }
 
@@ -103,29 +70,29 @@ public sealed class SqliteQuestionRepositoryTests
     public void Constructor_DoesNotCallSelectCandidatesOrFetchByIds_WhenCreated()
     {
         // Arrange
-        var store = new Mock<IQuestionStore>(MockBehavior.Strict);
+        Mock<IQuestionStore> store = new(MockBehavior.Strict);
         store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
 
         // Act
         Build(store);
 
-        // Assert — Strict mock: only LoadSummary should have been called
+        // Assert
         store.Verify(s => s.SelectCandidates(
             It.IsAny<IReadOnlyCollection<string>>(),
             It.IsAny<IReadOnlyCollection<int>>()), Times.Never);
         store.Verify(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>()), Times.Never);
     }
 
-    // -------------------------------------------------------------------------
-    // GetAsync — Cancellation
-    // -------------------------------------------------------------------------
+    #endregion
+
+    #region Cancellation
 
     [Fact]
     public async Task GetAsync_ThrowsOperationCanceledException_WhenTokenAlreadyCancelled()
     {
         // Arrange
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
         using CancellationTokenSource cts = new();
         cts.Cancel();
 
@@ -134,22 +101,35 @@ public sealed class SqliteQuestionRepositoryTests
             () => repo.GetAsync(new QuestionQuery(), cts.Token));
     }
 
-    // -------------------------------------------------------------------------
-    // GetAsync — Limit clamping (ADR-025)
-    // -------------------------------------------------------------------------
+    [Fact]
+    public async Task GetFilterOptionsAsync_ThrowsOperationCanceledException_WhenTokenAlreadyCancelled()
+    {
+        // Arrange
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
+        using CancellationTokenSource cts = new();
+        cts.Cancel();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => repo.GetFilterOptionsAsync(cts.Token));
+    }
+
+    #endregion
+
+    #region Limit clamping
 
     [Fact]
     public async Task GetAsync_ClampsToDefaultLimit_WhenLimitIsZero()
     {
-        // Arrange — 40 candidates, limit=0 should yield DefaultLimit=30
-        List<QuestionCandidate> candidates = Enumerable.Range(1, 40)
-            .Select(i => new QuestionCandidate { Id = i, Category = "[]", Algorithms = "[]" })
-            .ToList();
-        var store = StoreReturningCandidates(candidates);
-        var (repo, _) = Build(store);
+        // Arrange
+        const int zeroLimit = 0;
+        Mock<IQuestionStore> store = StoreReturningCandidates(UntaggedCandidates(_poolLargerThanMaxLimit));
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = 0 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = zeroLimit }, CancellationToken.None);
 
         // Assert
         Assert.Equal(QuestionQuery.DefaultLimit, result.Count);
@@ -158,15 +138,13 @@ public sealed class SqliteQuestionRepositoryTests
     [Fact]
     public async Task GetAsync_ClampsToDefaultLimit_WhenLimitIsNegative()
     {
-        // Arrange — 40 candidates, limit=-5 should yield DefaultLimit=30
-        List<QuestionCandidate> candidates = Enumerable.Range(1, 40)
-            .Select(i => new QuestionCandidate { Id = i, Category = "[]", Algorithms = "[]" })
-            .ToList();
-        var store = StoreReturningCandidates(candidates);
-        var (repo, _) = Build(store);
+        // Arrange
+        Mock<IQuestionStore> store = StoreReturningCandidates(UntaggedCandidates(_poolLargerThanMaxLimit));
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = -5 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = _negativeLimit }, CancellationToken.None);
 
         // Assert
         Assert.Equal(QuestionQuery.DefaultLimit, result.Count);
@@ -175,15 +153,13 @@ public sealed class SqliteQuestionRepositoryTests
     [Fact]
     public async Task GetAsync_ClampsToMaxLimit_WhenLimitExceedsMaximum()
     {
-        // Arrange — 40 candidates, limit=999 should yield MaxLimit=30
-        List<QuestionCandidate> candidates = Enumerable.Range(1, 40)
-            .Select(i => new QuestionCandidate { Id = i, Category = "[]", Algorithms = "[]" })
-            .ToList();
-        var store = StoreReturningCandidates(candidates);
-        var (repo, _) = Build(store);
+        // Arrange
+        Mock<IQuestionStore> store = StoreReturningCandidates(UntaggedCandidates(_poolLargerThanMaxLimit));
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = 999 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = _limitAboveMaximum }, CancellationToken.None);
 
         // Assert
         Assert.Equal(QuestionQuery.MaxLimit, result.Count);
@@ -192,119 +168,132 @@ public sealed class SqliteQuestionRepositoryTests
     [Fact]
     public async Task GetAsync_PreservesLimit_WhenLimitIsWithinRange()
     {
-        // Arrange — 10 candidates, limit=5 should return exactly 5
-        List<QuestionCandidate> candidates = Enumerable.Range(1, 10)
-            .Select(i => new QuestionCandidate { Id = i, Category = "[]", Algorithms = "[]" })
-            .ToList();
-        var store = StoreReturningCandidates(candidates);
-        var (repo, _) = Build(store);
+        // Arrange
+        Mock<IQuestionStore> store = StoreReturningCandidates(UntaggedCandidates(_poolSmallerThanLimit));
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = 5 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = _limitWithinRange }, CancellationToken.None);
 
         // Assert
-        Assert.Equal(5, result.Count);
+        Assert.Equal(_limitWithinRange, result.Count);
     }
 
     [Fact]
     public async Task GetAsync_ReturnsAllCandidates_WhenCountIsBelowLimit()
     {
-        // Arrange — only 2 candidates, limit=10
-        var store = StoreReturningCandidates([_threeCandidates[0], _threeCandidates[1]]);
-        var (repo, _) = Build(store);
+        // Arrange
+        QuestionCandidate[] twoCandidates = [_threeCandidates[0], _threeCandidates[1]];
+        Mock<IQuestionStore> store = StoreReturningCandidates(twoCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = 10 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = _generousLimit }, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Count);
+        Assert.Equal(twoCandidates.Length, result.Count);
     }
 
-    // -------------------------------------------------------------------------
-    // GetAsync — Tag matching (OR within type, AND across types)
-    // -------------------------------------------------------------------------
+    #endregion
+
+    #region Tag matching — OR within a type, AND across types
 
     [Fact]
     public async Task GetAsync_ReturnsAllCandidates_WhenNoTagFiltersAreSet()
     {
         // Arrange
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = 10 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = _generousLimit }, CancellationToken.None);
 
         // Assert
-        Assert.Equal(3, result.Count);
+        Assert.Equal(_threeCandidates.Length, result.Count);
     }
 
     [Fact]
-    public async Task GetAsync_FiltersByCategory_UsingOrWithinType()
+    public async Task GetAsync_ReturnsOnlyTaggedQuestions_WhenOneCategoryIsRequested()
     {
-        // Arrange — filter "rekurencja" should match id=1 (exact) and id=3 (combined)
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
-        var query = new QuestionQuery { Limit = 10, Categories = ["rekurencja"] };
+        // Arrange
+        int[] expectedIds = [1, 3];
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
+        QuestionQuery query = new() { Limit = _generousLimit, Categories = [_categoryRecursion] };
 
         // Act
         IReadOnlyList<Question> result = await repo.GetAsync(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal([1, 3], result.Select(q => q.Id).Order().ToArray());
+        Assert.Equal(expectedIds, result.Select(q => q.Id).Order().ToArray());
     }
 
     [Fact]
-    public async Task GetAsync_FiltersByAlgorithm_UsingOrWithinType()
+    public async Task GetAsync_ReturnsOnlyTaggedQuestions_WhenOneAlgorithmIsRequested()
     {
-        // Arrange — filter "DFS" should match id=2 and id=3
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
-        var query = new QuestionQuery { Limit = 10, Algorithms = ["DFS"] };
+        // Arrange
+        int[] expectedIds = [2, 3];
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
+        QuestionQuery query = new() { Limit = _generousLimit, Algorithms = [_algorithmDfs] };
 
         // Act
         IReadOnlyList<Question> result = await repo.GetAsync(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal([2, 3], result.Select(q => q.Id).Order().ToArray());
+        Assert.Equal(expectedIds, result.Select(q => q.Id).Order().ToArray());
     }
 
     [Fact]
     public async Task GetAsync_AppliesAndAcrossTypes_WhenBothCategoryAndAlgorithmAreSet()
     {
-        // Arrange — "rekurencja" AND "DFS" → only id=3 has both
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
-        var query = new QuestionQuery { Limit = 10, Categories = ["rekurencja"], Algorithms = ["DFS"] };
+        // Arrange
+        int[] expectedIds = [3];
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
+        QuestionQuery query = new()
+        {
+            Limit      = _generousLimit,
+            Categories = [_categoryRecursion],
+            Algorithms = [_algorithmDfs]
+        };
 
         // Act
         IReadOnlyList<Question> result = await repo.GetAsync(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal([3], result.Select(q => q.Id).Order().ToArray());
+        Assert.Equal(expectedIds, result.Select(q => q.Id).Order().ToArray());
     }
 
     [Fact]
-    public async Task GetAsync_MatchesMultipleTagsWithinOneType_UsingOr()
+    public async Task GetAsync_ReturnsQuestionsMatchingEitherTag_WhenTwoCategoriesAreRequested()
     {
-        // Arrange — "rekurencja" OR "grafy" should match all three
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
-        var query = new QuestionQuery { Limit = 10, Categories = ["rekurencja", "grafy"] };
+        // Arrange
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
+        QuestionQuery query = new()
+        {
+            Limit      = _generousLimit,
+            Categories = [_categoryRecursion, _categoryGraphs]
+        };
 
         // Act
         IReadOnlyList<Question> result = await repo.GetAsync(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(3, result.Count);
+        Assert.Equal(_threeCandidates.Length, result.Count);
     }
 
     [Fact]
     public async Task GetAsync_ReturnsEmpty_WhenTagFilterMatchesNothing()
     {
-        // Arrange — "unknownTag" matches no candidate
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
-        var query = new QuestionQuery { Limit = 10, Categories = ["unknownTag"] };
+        // Arrange
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
+        QuestionQuery query = new() { Limit = _generousLimit, Categories = [_absentTag] };
 
         // Act
         IReadOnlyList<Question> result = await repo.GetAsync(query, CancellationToken.None);
@@ -313,94 +302,84 @@ public sealed class SqliteQuestionRepositoryTests
         Assert.Empty(result);
     }
 
-    // -------------------------------------------------------------------------
-    // GetAsync — Shuffle called, order preserved through FetchByIds
-    // -------------------------------------------------------------------------
+    #endregion
+
+    #region Shuffle then cap
 
     [Fact]
-    public async Task GetAsync_CallsShuffler_WithMatchedCandidateList()
+    public async Task GetAsync_CallsShufflerOnce_WhenCandidatesAreMatched()
     {
         // Arrange
-        var store = StoreReturningCandidates(_threeCandidates);
-        var shufflerMock = new Mock<IShuffler>();
-        var (repo, _) = Build(store, shufflerMock);
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        Mock<IShuffler> shuffler = new();
+        (SqliteQuestionRepository repo, _) = Build(store, shuffler);
 
         // Act
-        await repo.GetAsync(new QuestionQuery { Limit = 10 }, CancellationToken.None);
+        await repo.GetAsync(new QuestionQuery { Limit = _generousLimit }, CancellationToken.None);
 
         // Assert
-        shufflerMock.Verify(s => s.Shuffle(It.IsAny<IList<QuestionCandidate>>()), Times.Once);
+        shuffler.Verify(s => s.Shuffle(It.IsAny<IList<QuestionCandidate>>()), Times.Once);
     }
 
     [Fact]
-    public async Task GetAsync_PreservesShuffledOrder_InReturnedList()
+    public async Task GetAsync_PreservesShufflerOrder_WhenShufflerReordersCandidates()
     {
-        // Arrange — shuffler reverses the list so order becomes [3, 2, 1]
-        var store = StoreReturningCandidates(_threeCandidates);
-        var shufflerMock = new Mock<IShuffler>();
-        shufflerMock.Setup(s => s.Shuffle(It.IsAny<IList<QuestionCandidate>>()))
-            .Callback<IList<QuestionCandidate>>(list =>
-            {
-                // Reverse in place
-                int n = list.Count;
-                for (int i = 0; i < n / 2; i++)
-                {
-                    (list[i], list[n - 1 - i]) = (list[n - 1 - i], list[i]);
-                }
-            });
-
-        var (repo, _) = Build(store, shufflerMock);
+        // Arrange
+        int[] expectedIds = [3, 2, 1];
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store, ReversingShuffler());
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = 10 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = _generousLimit }, CancellationToken.None);
 
-        // Assert — result should be in reversed order: [3, 2, 1]
-        Assert.Equal([3, 2, 1], result.Select(q => q.Id).ToArray());
+        // Assert
+        Assert.Equal(expectedIds, result.Select(q => q.Id).ToArray());
     }
 
     [Fact]
-    public async Task GetAsync_CapsAfterShuffle_NotBeforeShuffle()
+    public async Task GetAsync_CapsAfterShuffling_WhenCandidateCountExceedsLimit()
     {
-        // Arrange — 5 candidates, limit=3; shuffler reverses so ids [5,4,3,2,1] → take first 3 = [5,4,3]
-        List<QuestionCandidate> candidates = Enumerable.Range(1, 5)
-            .Select(i => new QuestionCandidate { Id = i, Category = "[]", Algorithms = "[]" })
-            .ToList();
-        var store = StoreReturningCandidates(candidates);
-        var shufflerMock = new Mock<IShuffler>();
-        shufflerMock.Setup(s => s.Shuffle(It.IsAny<IList<QuestionCandidate>>()))
-            .Callback<IList<QuestionCandidate>>(list =>
-            {
-                int n = list.Count;
-                for (int i = 0; i < n / 2; i++)
-                {
-                    (list[i], list[n - 1 - i]) = (list[n - 1 - i], list[i]);
-                }
-            });
-        var (repo, _) = Build(store, shufflerMock);
+        // Arrange — reversing five candidates gives [5,4,3,2,1]; capping after the shuffle
+        // takes the first three of that, whereas capping first would yield [1,2,3].
+        int[] expectedIds = [5, 4, 3];
+        Mock<IQuestionStore> store = StoreReturningCandidates(UntaggedCandidates(_shufflePoolSize));
+        (SqliteQuestionRepository repo, _) = Build(store, ReversingShuffler());
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = 3 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = _limitBelowPoolSize }, CancellationToken.None);
 
-        // Assert — should return 3 items in reversed order [5,4,3]
-        Assert.Equal(3, result.Count);
-        Assert.Equal([5, 4, 3], result.Select(q => q.Id).ToArray());
+        // Assert
+        Assert.Equal(expectedIds, result.Select(q => q.Id).ToArray());
     }
 
-    // -------------------------------------------------------------------------
-    // GetAsync — Seam exceptions bubble out (not swallowed)
-    // -------------------------------------------------------------------------
+    #endregion
+
+    #region Seam faults bubble rather than being swallowed
+
+    [Fact]
+    public async Task GetAsync_Bubbles_WhenSelectCandidatesThrowsSqliteException()
+    {
+        // Arrange
+        const string sqliteMessage = "database is locked";
+        const int sqliteBusyErrorCode = 5;
+        Mock<IQuestionStore> store = StoreThrowingFromSelectCandidates(
+            new SqliteException(sqliteMessage, sqliteBusyErrorCode));
+        (SqliteQuestionRepository repo, _) = Build(store);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<SqliteException>(
+            () => repo.GetAsync(new QuestionQuery(), CancellationToken.None));
+    }
 
     [Fact]
     public async Task GetAsync_Bubbles_WhenSelectCandidatesThrowsIOException()
     {
         // Arrange
-        var store = new Mock<IQuestionStore>();
-        store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
-        store.Setup(s => s.SelectCandidates(
-                It.IsAny<IReadOnlyCollection<string>>(),
-                It.IsAny<IReadOnlyCollection<int>>()))
-            .Throws(new IOException("disk error"));
-        var (repo, _) = Build(store);
+        const string diskMessage = "disk error";
+        Mock<IQuestionStore> store = StoreThrowingFromSelectCandidates(new IOException(diskMessage));
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act & Assert
         await Assert.ThrowsAsync<IOException>(
@@ -408,32 +387,75 @@ public sealed class SqliteQuestionRepositoryTests
     }
 
     [Fact]
+    public async Task GetAsync_Bubbles_WhenSelectCandidatesThrowsUnanticipatedException()
+    {
+        // Arrange — nothing in the seam's contract predicts this; it must still reach the caller,
+        // because the global middleware is the only thing entitled to shape an unknown fault.
+        const string unanticipatedMessage = "nobody predicted this";
+        Mock<IQuestionStore> store = StoreThrowingFromSelectCandidates(
+            new NotSupportedException(unanticipatedMessage));
+        (SqliteQuestionRepository repo, _) = Build(store);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<NotSupportedException>(
+            () => repo.GetAsync(new QuestionQuery(), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task GetAsync_Bubbles_WhenFetchByIdsThrowsInvalidOperationException()
     {
         // Arrange
-        var store = new Mock<IQuestionStore>();
-        store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
-        store.Setup(s => s.SelectCandidates(
-                It.IsAny<IReadOnlyCollection<string>>(),
-                It.IsAny<IReadOnlyCollection<int>>()))
-            .Returns(_threeCandidates);
+        const string stateMessage = "unexpected state";
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
         store.Setup(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>()))
-            .Throws(new InvalidOperationException("unexpected state"));
-        var (repo, _) = Build(store);
+            .Throws(new InvalidOperationException(stateMessage));
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => repo.GetAsync(new QuestionQuery { Limit = 10 }, CancellationToken.None));
+            () => repo.GetAsync(new QuestionQuery { Limit = _generousLimit }, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task GetAsync_Bubbles_WhenRowCarriesMalformedJson()
+    {
+        // Arrange — the row survives the seam, so the JSON fault is raised above it, in mapping.
+        const string malformedJson = "{ this is not json";
+        QuestionRow malformedRow = MinimalRow(1);
+        malformedRow.Content = malformedJson;
+        Mock<IQuestionStore> store = StoreReturningCandidates([_threeCandidates[0]]);
+        store.Setup(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>())).Returns([malformedRow]);
+        (SqliteQuestionRepository repo, _) = Build(store);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<JsonException>(
+            () => repo.GetAsync(new QuestionQuery { Limit = _generousLimit }, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task GetAsync_Bubbles_WhenShufflerThrows()
+    {
+        // Arrange
+        const string shufflerMessage = "shuffler failed";
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        Mock<IShuffler> shuffler = new();
+        shuffler.Setup(s => s.Shuffle(It.IsAny<IList<QuestionCandidate>>()))
+            .Throws(new InvalidOperationException(shufflerMessage));
+        (SqliteQuestionRepository repo, _) = Build(store, shuffler);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => repo.GetAsync(new QuestionQuery { Limit = _generousLimit }, CancellationToken.None));
     }
 
     [Fact]
     public void Constructor_Bubbles_WhenLoadSummaryThrowsInvalidOperationException()
     {
         // Arrange
-        var store = new Mock<IQuestionStore>();
-        store.Setup(s => s.LoadSummary())
-            .Throws(new InvalidOperationException("schema mismatch"));
-        var shuffler = new Mock<IShuffler>();
+        const string schemaMessage = "schema mismatch";
+        Mock<IQuestionStore> store = new();
+        store.Setup(s => s.LoadSummary()).Throws(new InvalidOperationException(schemaMessage));
+        Mock<IShuffler> shuffler = new();
 
         // Act & Assert
         Assert.Throws<InvalidOperationException>(
@@ -443,170 +465,175 @@ public sealed class SqliteQuestionRepositoryTests
                 new CapturingLogger<SqliteQuestionRepository>()));
     }
 
-    // -------------------------------------------------------------------------
-    // GetAsync — Unknown-value warnings
-    // -------------------------------------------------------------------------
+    [Fact]
+    public async Task GetAsync_ThrowsInvalidOperationException_WhenRowHasUnrecognisedTypeString()
+    {
+        // Arrange
+        const string unrecognisedType = "bogus";
+        Mock<IQuestionStore> store = StoreReturningCandidates([_threeCandidates[0]]);
+        store.Setup(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>()))
+            .Returns([MinimalRow(1, unrecognisedType)]);
+        (SqliteQuestionRepository repo, _) = Build(store);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => repo.GetAsync(new QuestionQuery { Limit = _generousLimit }, CancellationToken.None));
+    }
+
+    #endregion
+
+    #region Unknown-value warnings
 
     [Fact]
     public async Task GetAsync_LogsWarning_WhenStageIsNotInKnownSet()
     {
-        // Arrange — known stages are E1, E2 (from DefaultSummary)
-        var store = StoreReturningCandidates([]);
-        var (repo, logger) = Build(store);
-        var query = new QuestionQuery { Stages = ["UNKNOWN_STAGE"] };
+        // Arrange
+        Mock<IQuestionStore> store = StoreReturningCandidates([]);
+        (SqliteQuestionRepository repo, CapturingLogger<SqliteQuestionRepository> logger) = Build(store);
+        QuestionQuery query = new() { Stages = [_absentStage] };
 
         // Act
         await repo.GetAsync(query, CancellationToken.None);
 
         // Assert
         Assert.Contains(logger.Entries,
-            e => e.Level == LogLevel.Warning && e.Message.Contains("UNKNOWN_STAGE"));
+            e => e.Level == LogLevel.Warning && e.Message.Contains(_absentStage));
     }
 
     [Fact]
     public async Task GetAsync_LogsWarning_WhenYearIsNotInKnownSet()
     {
-        // Arrange — known years are 2023, 2024
-        var store = StoreReturningCandidates([]);
-        var (repo, logger) = Build(store);
-        var query = new QuestionQuery { Years = [1999] };
+        // Arrange
+        Mock<IQuestionStore> store = StoreReturningCandidates([]);
+        (SqliteQuestionRepository repo, CapturingLogger<SqliteQuestionRepository> logger) = Build(store);
+        QuestionQuery query = new() { Years = [_absentYear] };
 
         // Act
         await repo.GetAsync(query, CancellationToken.None);
 
         // Assert
         Assert.Contains(logger.Entries,
-            e => e.Level == LogLevel.Warning && e.Message.Contains("1999"));
+            e => e.Level == LogLevel.Warning && e.Message.Contains(_absentYear.ToString()));
     }
 
     [Fact]
     public async Task GetAsync_DoesNotLogWarning_WhenAllValuesAreKnown()
     {
         // Arrange
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, logger) = Build(store);
-        var query = new QuestionQuery { Stages = ["E1"], Years = [2023] };
+        const string unknownValueMarker = "not present";
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, CapturingLogger<SqliteQuestionRepository> logger) = Build(store);
+        QuestionQuery query = new() { Stages = [_knownStage], Years = [_knownYear] };
 
         // Act
         await repo.GetAsync(query, CancellationToken.None);
 
-        // Assert — no warning-level entries about unknown values
+        // Assert
         Assert.DoesNotContain(logger.Entries,
-            e => e.Level == LogLevel.Warning && e.Message.Contains("not present"));
+            e => e.Level == LogLevel.Warning && e.Message.Contains(unknownValueMarker));
     }
 
-    // -------------------------------------------------------------------------
-    // Row-to-Question mapping
-    // -------------------------------------------------------------------------
+    #endregion
+
+    #region Row to Question mapping
 
     [Fact]
-    public async Task GetAsync_MapsAllFieldsCorrectly_FromRowToQuestion()
+    public async Task GetAsync_MapsEveryRowField_WhenRowIsFullyPopulated()
     {
         // Arrange
+        const int    mappedId          = 42;
+        const string mappedOlympiad    = "OIJ";
+        const int    mappedYear        = 2025;
+        const int    mappedDifficulty  = 3;
+        const string mappedSource      = "Olimpiada 2025";
+        const string mappedSourceUrl   = "https://example.com/task";
+        const string mappedSourceRaw   = "Source raw text";
+        const string mappedExplanation = "Explanation source";
+        const int    mappedPoints      = 2;
+        const int    partialCreditOn   = 1;
+        string[] mappedOptions = ["A", "B", "C"];
+        string[] mappedAnswers = ["A", "C"];
+
         QuestionRow fullRow = new()
         {
-            Id                = 42,
-            Olympiad          = "OIJ",
-            Stage             = "E2",
-            Year              = 2025,
-            Difficulty        = 3,
-            Source            = "Olimpiada 2025",
-            SourceUrl         = "https://example.com/task",
-            SourceRaw         = "Source raw text",
-            ExplanationSource = "Explanation source",
+            Id                = mappedId,
+            Olympiad          = mappedOlympiad,
+            Stage             = _secondStage,
+            Year              = mappedYear,
+            Difficulty        = mappedDifficulty,
+            Source            = mappedSource,
+            SourceUrl         = mappedSourceUrl,
+            SourceRaw         = mappedSourceRaw,
+            ExplanationSource = mappedExplanation,
             Type              = "multi",
             Content           = "[{\"Type\":\"text\",\"Text\":\"Which?\"}]",
             Options           = "[\"A\",\"B\",\"C\"]",
             CorrectAnswer     = "[\"A\",\"C\"]",
             Category          = "[\"grafy\"]",
             Algorithms        = "[\"DFS\"]",
-            Points            = 2,
-            PartialCredit     = 1
+            Points            = mappedPoints,
+            PartialCredit     = partialCreditOn
         };
 
-        var store = new Mock<IQuestionStore>();
-        store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
-        store.Setup(s => s.SelectCandidates(
-                It.IsAny<IReadOnlyCollection<string>>(),
-                It.IsAny<IReadOnlyCollection<int>>()))
-            .Returns([new QuestionCandidate { Id = 42, Category = "[\"grafy\"]", Algorithms = "[\"DFS\"]" }]);
-        store.Setup(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>()))
-            .Returns([fullRow]);
-        var (repo, _) = Build(store);
+        Mock<IQuestionStore> store = StoreReturningCandidates(
+            [new QuestionCandidate { Id = mappedId, Category = "[\"grafy\"]", Algorithms = "[\"DFS\"]" }]);
+        store.Setup(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>())).Returns([fullRow]);
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
-        IReadOnlyList<Question> result = await repo.GetAsync(new QuestionQuery { Limit = 10 }, CancellationToken.None);
+        IReadOnlyList<Question> result = await repo.GetAsync(
+            new QuestionQuery { Limit = _generousLimit }, CancellationToken.None);
 
         // Assert
-        Question q = Assert.Single(result);
-        Assert.Equal(42, q.Id);
-        Assert.Equal("OIJ", q.Olympiad);
-        Assert.Equal("E2", q.Stage);
-        Assert.Equal(2025, q.Year);
-        Assert.Equal(3, q.Difficulty);
-        Assert.Equal("Olimpiada 2025", q.Source);
-        Assert.Equal("https://example.com/task", q.SourceUrl);
-        Assert.Equal("Source raw text", q.SourceRaw);
-        Assert.Equal("Explanation source", q.ExplanationSource);
-        Assert.Equal(QuestionType.Multi, q.Type);
-        Assert.Equal(["A", "B", "C"], q.Options);
-        Assert.Equal(["A", "C"], q.CorrectAnswer);
-        Assert.Equal(["grafy"], q.Category);
-        Assert.Equal(["DFS"], q.Algorithms);
-        Assert.Equal(2, q.Points);
-        Assert.True(q.PartialCredit);
+        Question mapped = Assert.Single(result);
+        Assert.Equal(mappedId, mapped.Id);
+        Assert.Equal(mappedOlympiad, mapped.Olympiad);
+        Assert.Equal(_secondStage, mapped.Stage);
+        Assert.Equal(mappedYear, mapped.Year);
+        Assert.Equal(mappedDifficulty, mapped.Difficulty);
+        Assert.Equal(mappedSource, mapped.Source);
+        Assert.Equal(mappedSourceUrl, mapped.SourceUrl);
+        Assert.Equal(mappedSourceRaw, mapped.SourceRaw);
+        Assert.Equal(mappedExplanation, mapped.ExplanationSource);
+        Assert.Equal(QuestionType.Multi, mapped.Type);
+        Assert.Equal(mappedOptions, mapped.Options);
+        Assert.Equal(mappedAnswers, mapped.CorrectAnswer);
+        Assert.Equal([_categoryGraphs], mapped.Category);
+        Assert.Equal([_algorithmDfs], mapped.Algorithms);
+        Assert.Equal(mappedPoints, mapped.Points);
+        Assert.True(mapped.PartialCredit);
     }
 
-    [Fact]
-    public async Task GetAsync_ThrowsInvalidOperationException_WhenRowHasUnrecognisedTypeString()
-    {
-        // Arrange — FetchByIds returns a row with type="bogus"
-        var store = new Mock<IQuestionStore>();
-        store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
-        store.Setup(s => s.SelectCandidates(
-                It.IsAny<IReadOnlyCollection<string>>(),
-                It.IsAny<IReadOnlyCollection<int>>()))
-            .Returns([new QuestionCandidate { Id = 1, Category = "[]", Algorithms = "[]" }]);
-        store.Setup(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>()))
-            .Returns([MinimalRow(1, type: "bogus")]);
-        var (repo, _) = Build(store);
+    #endregion
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => repo.GetAsync(new QuestionQuery { Limit = 10 }, CancellationToken.None));
-    }
-
-    // -------------------------------------------------------------------------
-    // GetFilterOptionsAsync — returns cached; no extra store calls
-    // -------------------------------------------------------------------------
+    #region Cached filter options
 
     [Fact]
-    public async Task GetFilterOptionsAsync_ReturnsCachedOptions_WithoutCallingStore()
+    public async Task GetFilterOptionsAsync_ReturnsCachedOptions_WhenCalledAfterConstruction()
     {
-        // Arrange
-        var store = new Mock<IQuestionStore>(MockBehavior.Strict);
+        // Arrange — a strict mock throws on any store call the constructor did not already make.
+        Mock<IQuestionStore> store = new(MockBehavior.Strict);
         store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
-        var (repo, _) = Build(store);
-        // Strict mock: any additional store call after construction will throw
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
         FilterOptions options = await repo.GetFilterOptionsAsync(CancellationToken.None);
 
         // Assert
-        Assert.Equal(3, options.TotalQuestions);
-        Assert.Equal(2, options.Stages.Count);
-        Assert.Equal(2, options.Years.Count);
-        Assert.Equal(2, options.Categories.Count);
-        Assert.Equal(2, options.Algorithms.Count);
-        store.Verify(s => s.LoadSummary(), Times.Once); // only from constructor
+        Assert.Equal(_threeCandidates.Length, options.TotalQuestions);
+        Assert.Equal(_distinctStageCount, options.Stages.Count);
+        Assert.Equal(_distinctYearCount, options.Years.Count);
+        Assert.Equal(_distinctCategoryCount, options.Categories.Count);
+        Assert.Equal(_distinctAlgorithmCount, options.Algorithms.Count);
+        store.Verify(s => s.LoadSummary(), Times.Once);
     }
 
     [Fact]
-    public async Task GetFilterOptionsAsync_ReturnsSameInstance_OnMultipleCalls()
+    public async Task GetFilterOptionsAsync_ReturnsSameInstance_WhenCalledTwice()
     {
         // Arrange
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
+        Mock<IQuestionStore> store = StoreReturningCandidates(_threeCandidates);
+        (SqliteQuestionRepository repo, _) = Build(store);
 
         // Act
         FilterOptions first  = await repo.GetFilterOptionsAsync(CancellationToken.None);
@@ -616,17 +643,102 @@ public sealed class SqliteQuestionRepositoryTests
         Assert.Same(first, second);
     }
 
-    [Fact]
-    public async Task GetFilterOptionsAsync_ThrowsOperationCanceledException_WhenTokenAlreadyCancelled()
-    {
-        // Arrange
-        var store = StoreReturningCandidates(_threeCandidates);
-        var (repo, _) = Build(store);
-        using CancellationTokenSource cts = new();
-        cts.Cancel();
+    #endregion
 
-        // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(
-            () => repo.GetFilterOptionsAsync(cts.Token));
+    #region Helpers
+
+    private static BankSummary DefaultSummary()
+    {
+        return new BankSummary
+        {
+            TotalCount = _threeCandidates.Length,
+            Stages =
+            [
+                new FilterOption { Value = _knownStage,  Count = 2 },
+                new FilterOption { Value = _secondStage, Count = 1 }
+            ],
+            Years =
+            [
+                new FilterOption { Value = _knownYear.ToString(),  Count = 2 },
+                new FilterOption { Value = _secondYear.ToString(), Count = 1 }
+            ],
+            CategoryJsons  = ["[\"rekurencja\"]", "[\"grafy\"]", "[\"rekurencja\",\"grafy\"]"],
+            AlgorithmJsons = ["[\"BFS\"]",        "[\"DFS\"]",   "[\"BFS\",\"DFS\"]"]
+        };
     }
+
+    private static QuestionRow MinimalRow(int id, string type = "single")
+    {
+        return new QuestionRow
+        {
+            Id            = id,
+            Olympiad      = "OIJ",
+            Stage         = _knownStage,
+            Year          = _knownYear,
+            Type          = type,
+            Content       = "[{\"Type\":\"text\",\"Text\":\"Q?\"}]",
+            Options       = "[\"A\",\"B\"]",
+            CorrectAnswer = "[\"A\"]",
+            Category      = "[\"rekurencja\"]",
+            Algorithms    = "[\"BFS\"]",
+            Points        = 1,
+            PartialCredit = 0
+        };
+    }
+
+    private static List<QuestionCandidate> UntaggedCandidates(int count)
+    {
+        return [.. Enumerable.Range(1, count)
+            .Select(id => new QuestionCandidate { Id = id, Category = "[]", Algorithms = "[]" })];
+    }
+
+    private static (SqliteQuestionRepository Repo, CapturingLogger<SqliteQuestionRepository> Logger)
+        Build(Mock<IQuestionStore> store, Mock<IShuffler> shuffler = null)
+    {
+        CapturingLogger<SqliteQuestionRepository> logger = new();
+        shuffler ??= new Mock<IShuffler>();
+        return (new SqliteQuestionRepository(store.Object, shuffler.Object, logger), logger);
+    }
+
+    private static Mock<IQuestionStore> StoreReturningCandidates(
+        IReadOnlyList<QuestionCandidate> candidates, BankSummary summary = null)
+    {
+        Mock<IQuestionStore> store = new(MockBehavior.Loose);
+        store.Setup(s => s.LoadSummary()).Returns(summary ?? DefaultSummary());
+        store.Setup(s => s.SelectCandidates(
+                It.IsAny<IReadOnlyCollection<string>>(),
+                It.IsAny<IReadOnlyCollection<int>>()))
+            .Returns(candidates);
+        store.Setup(s => s.FetchByIds(It.IsAny<IReadOnlyList<int>>()))
+            .Returns((IReadOnlyList<int> ids) => ids.Select(id => MinimalRow(id)).ToList());
+        return store;
+    }
+
+    private static Mock<IQuestionStore> StoreThrowingFromSelectCandidates(Exception fault)
+    {
+        Mock<IQuestionStore> store = new();
+        store.Setup(s => s.LoadSummary()).Returns(DefaultSummary());
+        store.Setup(s => s.SelectCandidates(
+                It.IsAny<IReadOnlyCollection<string>>(),
+                It.IsAny<IReadOnlyCollection<int>>()))
+            .Throws(fault);
+        return store;
+    }
+
+    private static Mock<IShuffler> ReversingShuffler()
+    {
+        Mock<IShuffler> shuffler = new();
+        shuffler.Setup(s => s.Shuffle(It.IsAny<IList<QuestionCandidate>>()))
+            .Callback<IList<QuestionCandidate>>(list =>
+            {
+                int count = list.Count;
+                for (int i = 0; i < count / 2; i++)
+                {
+                    (list[i], list[count - 1 - i]) = (list[count - 1 - i], list[i]);
+                }
+            });
+        return shuffler;
+    }
+
+    #endregion
 }

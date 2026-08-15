@@ -15,8 +15,8 @@ public sealed class LocalStorageService
         _logger = logger;
     }
 
-    /// Returns the raw string value stored under the key, or null when absent.
-    /// The value is returned as-is — the caller is responsible for deserialization and validation.
+    // Returned as-is, unvalidated: browser storage is user-writable, so every caller must
+    // validate before use rather than trusting what comes back.
     public async Task<string> GetRawStringAsync(string key)
     {
         return await _js.InvokeAsync<string>("localStorage.getItem", key);

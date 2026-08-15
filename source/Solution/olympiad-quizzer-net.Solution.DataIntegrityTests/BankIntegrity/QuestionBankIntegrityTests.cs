@@ -60,6 +60,18 @@ public sealed class QuestionBankIntegrityTests
     #region Production bank assertions
 
     [Fact]
+    public void ProductionBank_ContainsQuestions_WhenLoaded()
+    {
+        // Arrange & Act — every other assertion in this class collects violations and expects an
+        // empty list, which an empty bank satisfies trivially. This is the guard that stops a
+        // truncated or emptied questions.json passing the whole suite.
+        List<Question> questions = LoadProductionBank();
+
+        // Assert
+        Assert.NotEmpty(questions);
+    }
+
+    [Fact]
     public void ProductionBank_HasNoShortAnswerViolations_WhenAllQuestionsChecked()
     {
         // Arrange
@@ -174,10 +186,11 @@ public sealed class QuestionBankIntegrityTests
         // Act
         List<string> violations = CollectAltViolations(questions);
 
-        // Assert
+        // Assert — presence only. Whether the text is Polish, and whether it carries enough detail
+        // to answer the question, is not tested here and must not be read into a green result.
         Assert.True(
             violations.Count == 0,
-            $"Found {violations.Count} image block(s) without mandatory Polish alt text:{Environment.NewLine}{string.Join(Environment.NewLine, violations)}");
+            $"Found {violations.Count} image block(s) with no alt text at all:{Environment.NewLine}{string.Join(Environment.NewLine, violations)}");
     }
 
     [Fact]
@@ -216,22 +229,22 @@ public sealed class QuestionBankIntegrityTests
         Assert.DoesNotContain(_algorithmBubble, vocabulary.Categories);
     }
 
-    [Fact]
-    public void ParseTagVocabulary_ExcludesSourceFormatSegments_WhenRealTagsDocumentIsParsed()
+    [Theory]
+    [InlineData("OLYMPIAD")]
+    [InlineData("YEAR")]
+    [InlineData("STAGE")]
+    [InlineData("PART")]
+    public void ParseTagVocabulary_ExcludesASourceFormatSegment_WhenRealTagsDocumentIsParsed(string segment)
     {
         // Arrange
-        string[] sourceFormatSegments = ["OLYMPIAD", "YEAR", "STAGE", "PART"];
         string tagsPath = TagsDocumentPath();
 
         // Act
         TagVocabulary vocabulary = ParseTagVocabulary(tagsPath);
 
         // Assert
-        foreach (string segment in sourceFormatSegments)
-        {
-            Assert.DoesNotContain(segment, vocabulary.Categories);
-            Assert.DoesNotContain(segment, vocabulary.Algorithms);
-        }
+        Assert.DoesNotContain(segment, vocabulary.Categories);
+        Assert.DoesNotContain(segment, vocabulary.Algorithms);
     }
 
     #endregion
@@ -565,8 +578,9 @@ public sealed class QuestionBankIntegrityTests
         // Act
         List<string> violations = CollectTagViolations([crossAxis], vocabulary);
 
-        // Assert
-        Assert.Equal(2, violations.Count);
+        // Assert — one for the algorithm used as a category, one for the category used as an algorithm
+        const int expectedViolationCount = 2;
+        Assert.Equal(expectedViolationCount, violations.Count);
         Assert.Contains(_detectorIdCrossAxisTag.ToString(), string.Join(" ", violations));
     }
 
@@ -733,7 +747,7 @@ public sealed class QuestionBankIntegrityTests
 
             switch (question.Type)
             {
-                // ADR-024: one "true"/"false" entry per options entry, positional.
+                // One "true"/"false" entry per options entry, positional.
                 case QuestionType.TrueFalse:
                     if (answers.Count != options.Count)
                     {
@@ -752,7 +766,7 @@ public sealed class QuestionBankIntegrityTests
 
                     break;
 
-                // ADR-024: option values in correct order — so a permutation, never a repeat.
+                // Option values in the correct order — so a permutation, never a repeat.
                 case QuestionType.Ordering:
                     if (answers.Count != options.Count)
                     {
@@ -768,7 +782,7 @@ public sealed class QuestionBankIntegrityTests
 
                     break;
 
-                // ADR-024: matchOptions values, positional, aligned to options by index.
+                // matchOptions values, positional, aligned to options by index.
                 case QuestionType.Matching:
                     if (answers.Count != options.Count)
                     {

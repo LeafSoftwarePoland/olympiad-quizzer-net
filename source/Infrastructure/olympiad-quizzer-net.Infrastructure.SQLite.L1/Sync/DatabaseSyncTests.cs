@@ -15,10 +15,7 @@ public sealed class DatabaseSyncTests
 {
     private const string _singleBank   = "single-question-bank.json";
     private const string _filteringBank = "filtering-bank.json";
-
-    // -------------------------------------------------------------------------
-    // Check — basic contract
-    // -------------------------------------------------------------------------
+    #region Check
 
     [Fact]
     public void Check_ReturnsEmptyDelta_WhenProductionBankAndDatabaseAreInSync()
@@ -63,10 +60,9 @@ public sealed class DatabaseSyncTests
         // Act & Assert
         Assert.Throws<FileNotFoundException>(() => DatabaseSync.Check(jsonPath, missingDb));
     }
+    #endregion
 
-    // -------------------------------------------------------------------------
-    // Sync — delta reporting (add / change / remove)
-    // -------------------------------------------------------------------------
+    #region Sync — delta reporting
 
     [Fact]
     public void Sync_ReportsAllQuestionsAsAdded_WhenDatabaseIsNewlyCreated()
@@ -183,10 +179,9 @@ public sealed class DatabaseSyncTests
             if (File.Exists(modifiedJsonPath)) File.Delete(modifiedJsonPath);
         }
     }
+    #endregion
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+    #region Helpers
 
     private static string WriteTempJson(string json)
     {
@@ -201,4 +196,6 @@ public sealed class DatabaseSyncTests
         return JsonSerializer.Deserialize<List<Question>>(json, JsonOptions.Default)
             ?? throw new InvalidOperationException($"Could not deserialize {jsonPath}.");
     }
+
+    #endregion
 }
