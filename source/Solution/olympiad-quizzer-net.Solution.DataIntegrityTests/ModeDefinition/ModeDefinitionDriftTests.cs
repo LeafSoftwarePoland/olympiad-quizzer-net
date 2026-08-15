@@ -1,28 +1,29 @@
 using System.Text.Json.Nodes;
-using OlympiadQuizzer.App.Api.L1.Harness;
 using OlympiadQuizzer.Core.Tests.Common;
+using OlympiadQuizzer.Core.Tests.Common.Harness;
 
-namespace OlympiadQuizzer.App.Api.L1.ModeDefinition;
+namespace OlympiadQuizzer.Solution.DataIntegrityTests.ModeDefinition;
 
-[Trait(TestTiers.Tier, TestTiers.L1)]
+[Trait(TestTiers.Tier, TestTiers.Integrity)]
 public sealed class ModeDefinitionDriftTests
 {
     [Fact]
-    public void OijJson_ParsedContent_DoesMatchMdBlock()
+    public void OijJson_DoesMatchMdBlock_WhenComparedToRulesDocument()
     {
-        string repoRoot = FixturePath.RepoRoot();
-        string oijMdPath = Path.Combine(repoRoot, "docs", "rules", "oij.md");
+        // Arrange
+        string repoRoot    = FixturePath.RepoRoot();
+        string oijMdPath   = Path.Combine(repoRoot, "docs", "rules", "oij.md");
         string oijJsonPath = Path.Combine(
             repoRoot, "source", "App", "olympiad-quizzer-net.App.Client", "wwwroot", "modes", "oij.json");
-
-        string mdContent = File.ReadAllText(oijMdPath);
+        string mdContent   = File.ReadAllText(oijMdPath);
         string fileContent = File.ReadAllText(oijJsonPath);
 
+        // Act
         string jsonFromMd = ExtractJsonBlock(mdContent);
-
-        JsonNode mdNode = JsonNode.Parse(jsonFromMd);
+        JsonNode mdNode   = JsonNode.Parse(jsonFromMd);
         JsonNode fileNode = JsonNode.Parse(fileContent);
 
+        // Assert
         Assert.True(
             JsonNode.DeepEquals(mdNode, fileNode),
             "oij.json does not match the machine-readable block in docs/rules/oij.md — " +
@@ -53,14 +54,10 @@ public sealed class ModeDefinitionDriftTests
             }
 
             if (inBlock && line.StartsWith("```"))
-            {
                 break;
-            }
 
             if (inBlock)
-            {
                 jsonLines.Add(line);
-            }
         }
 
         return string.Join("\n", jsonLines);

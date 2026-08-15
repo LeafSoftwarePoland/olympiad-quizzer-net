@@ -695,11 +695,13 @@
       },
       {
         "type": "image",
-        "file": "img-18-1.png"
+        "file": "img-18-1.png",
+        "alt": "Schemat ruchów skoczka szachowego: z centralnego punktu na siatce wychodzi 8 strzałek wskazujących możliwe kierunki ruchu skoczka na naprzemiennie zakreskowanej planszy."
       },
       {
         "type": "image",
-        "file": "img-18-2.png"
+        "file": "img-18-2.png",
+        "alt": "Szachownica 8 na 8 z polami naprzemiennie zakreskowanymi i białymi; kolumny oznaczone literami a–h, wiersze liczbami 1–8."
       },
       {
         "type": "text",
@@ -962,7 +964,8 @@
       {
         "type": "image",
         "file": "img-24.png",
-        "source": "vector"
+        "source": "vector",
+        "alt": "Graf nieskierowany z wierzchołkami A i B połączonymi siecią krawędzi; poniżej ten sam graf z wyróżnionym szarym wierzchołkiem na jednej ze ścieżek siedmiokrawędziowych od A do B."
       }
     ],
     "options": [],
@@ -1350,7 +1353,7 @@
       "S[i] == ’a’",
       "S == \"a\""
     ],
-    "correctAnswer": "S[i] == ‘a’",
+    "correctAnswer": "S[i] == ’a’",
     "points": 1,
     "partialCredit": false,
     "explanation": [
@@ -2256,7 +2259,8 @@
       {
         "type": "image",
         "file": "img-55.png",
-        "source": "vector"
+        "source": "vector",
+        "alt": "Graf nieskierowany z wierzchołkami A i B połączonymi siecią krawędzi, służący do wyznaczenia najdłuższej ścieżki prostej między nimi."
       }
     ],
     "options": [],
@@ -3638,7 +3642,8 @@
       {
         "type": "image",
         "file": "img-86.png",
-        "source": "vector"
+        "source": "vector",
+        "alt": "Graf nieskierowany z wierzchołkami A i B; powyżej schemat sekwencji algorytmu Collatza z liczbami w polach i strzałkami kierunkowymi."
       }
     ],
     "options": [],
@@ -5337,7 +5342,8 @@
       {
         "type": "image",
         "file": "img-120.png",
-        "source": "vector"
+        "source": "vector",
+        "alt": "Fragment pełnego drzewa binarnego do trzech poziomów: korzeń (węzeł 1) ma dwa dzieci (węzły 2 i 3), każde z dzieci ma po dwa liście (węzły 4–5 i 6–7)."
       }
     ],
     "options": [],
@@ -6623,7 +6629,8 @@
       {
         "type": "image",
         "file": "img-150.png",
-        "source": "vector"
+        "source": "vector",
+        "alt": "Fragment pełnego drzewa binarnego do trzech poziomów: korzeń (węzeł 1) ma dwa dzieci (węzły 2 i 3), każde z dzieci ma po dwa liście (węzły 4–5 i 6–7)."
       }
     ],
     "options": [],
@@ -7418,7 +7425,8 @@
       },
       {
         "type": "image",
-        "file": "img-168.png"
+        "file": "img-168.png",
+        "alt": "Prostokątna siatka z dwoma punktami (lewy dolny i prawy górny) i przerywaną ścieżką przechodzącą przez każde pole; poniżej warianty ścieżek ilustrujące przeszukiwanie z nawracaniem."
       }
     ],
     "options": [],
@@ -7890,7 +7898,8 @@
       {
         "type": "image",
         "file": "img-178.png",
-        "source": "vector"
+        "source": "vector",
+        "alt": "Szachownica z gońcem stojącym w centrum; strzałki zaznaczają pola atakowane wzdłuż obu przekątnych we wszystkich czterech kierunkach."
       }
     ],
     "options": [],
