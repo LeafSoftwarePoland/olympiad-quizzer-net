@@ -194,6 +194,10 @@ public sealed class GraderSingleTests
         Assert.Equal(0.0, result.MaxPoints);
     }
 
+    [Fact]
+    public void QuestionType_ReturnsSingle_WhenGraderIsInstantiated()
+        => Assert.Equal(QuestionType.Single, _sut.QuestionType);
+
     private static SubmittedAnswer MakeAnswer(params string[] values)
     {
         return new SubmittedAnswer { Values = new List<string>(values) };

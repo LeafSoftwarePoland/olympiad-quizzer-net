@@ -126,6 +126,10 @@ public sealed class GraderMultiTests
         Assert.Equal(4.0, result.MaxPoints);
     }
 
+    [Fact]
+    public void QuestionType_ReturnsMulti_WhenGraderIsInstantiated()
+        => Assert.Equal(QuestionType.Multi, _sut.QuestionType);
+
     private static SubmittedAnswer MakeAnswer(params string[] values)
     {
         return new SubmittedAnswer { Values = new List<string>(values) };

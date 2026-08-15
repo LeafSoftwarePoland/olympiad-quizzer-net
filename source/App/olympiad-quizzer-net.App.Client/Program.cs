@@ -46,6 +46,7 @@ public class Program
         builder.Services.AddSingleton(new GraderDispatcher(graders));
 
         builder.Services.AddScoped<IQuestionRepository, ApiQuestionRepository>();
+        builder.Services.AddSingleton<ErrorMessageService>();
         builder.Services.AddScoped<LocalStorageService>();
         builder.Services.AddScoped<ToastService>();
         builder.Services.AddScoped<AppVersionService>();

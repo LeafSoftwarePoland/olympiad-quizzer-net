@@ -148,6 +148,10 @@ public sealed class GraderOrderingTests
         Assert.Equal(0.0, result.MaxPoints);
     }
 
+    [Fact]
+    public void QuestionType_ReturnsOrdering_WhenGraderIsInstantiated()
+        => Assert.Equal(QuestionType.Ordering, _sut.QuestionType);
+
     private static SubmittedAnswer MakeAnswer(params string[] values)
     {
         return new SubmittedAnswer { Values = new List<string>(values) };

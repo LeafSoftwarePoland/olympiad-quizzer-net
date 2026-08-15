@@ -24,6 +24,12 @@
     <Content Include="..\..\..\data\questions.db"
              Link="data\questions.db"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\data\images\**"
+             Link="data\images\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\..\data\dev\questions.db"
+             Link="data\dev\questions.db"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -4,6 +4,7 @@
 @inject ModeCatalog Modes
 @inject NavigationManager Nav
 @inject ToastService Toasts
+@inject ErrorMessageService ErrorMessages
 
 <HeadContent>
     <meta name="robots" content="noindex" />
@@ -64,6 +65,17 @@
     {
         <ServerUnavailable OnRetry="StartQuizAsync" />
     }
+
+    @if (_errorHeading != null)
+    {
+        <div class="api-error" role="alert">
+            <p><strong>@_errorHeading</strong></p>
+            @if (_errorDetail != null)
+            {
+                <p>@_errorDetail</p>
+            }
+        </div>
+    }
 </div>
 
 @code {
@@ -72,6 +84,8 @@
     private int _timeLimitMinutes = 90;
     private bool _starting;
     private bool _serverUnavailable;
+    private string _errorHeading;
+    private string _errorDetail;
     private bool _hasResumableSession;
 
     protected override async Task OnInitializedAsync()
@@ -116,6 +130,8 @@
     {
         _starting = true;
         _serverUnavailable = false;
+        _errorHeading = null;
+        _errorDetail = null;
 
         try
         {
@@ -133,14 +149,25 @@
         {
             _serverUnavailable = true;
         }
-        catch (Exception ex)
+        catch (QuizDrawException ex)
         {
-            Toasts.ShowError("Błąd podczas ładowania pytań: " + ex.Message);
+            SetError(ex.Message);
+        }
+        catch (Exception)
+        {
+            SetError(ErrorMessages.GetMessage(null));
         }
         finally
         {
             _starting = false;
         }
+    }
+
+    private void SetError(string message)
+    {
+        int sep = message.IndexOf('\n');
+        _errorHeading = sep >= 0 ? message[..sep] : message;
+        _errorDetail = sep >= 0 ? message[(sep + 1)..] : null;
     }
 
     private void UpdateLimit(string value)

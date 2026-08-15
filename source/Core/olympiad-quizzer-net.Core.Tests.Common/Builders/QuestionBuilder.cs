@@ -101,6 +101,24 @@ public sealed class QuestionBuilder
         return this;
     }
 
+    public QuestionBuilder WithCategory(params string[] category)
+    {
+        _category = new List<string>(category);
+        return this;
+    }
+
+    public QuestionBuilder WithoutCategory()
+    {
+        _category = [];
+        return this;
+    }
+
+    public QuestionBuilder WithAlgorithms(params string[] algorithms)
+    {
+        _algorithms = new List<string>(algorithms);
+        return this;
+    }
+
     public QuestionBuilder WithPoints(int points)
     {
         _points = points;

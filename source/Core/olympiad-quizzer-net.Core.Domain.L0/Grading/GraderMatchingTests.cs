@@ -145,6 +145,10 @@ public sealed class GraderMatchingTests
         Assert.Equal(0.0, result.MaxPoints);
     }
 
+    [Fact]
+    public void QuestionType_ReturnsMatching_WhenGraderIsInstantiated()
+        => Assert.Equal(QuestionType.Matching, _sut.QuestionType);
+
     private static SubmittedAnswer MakeAnswer(params string[] values)
     {
         return new SubmittedAnswer { Values = new List<string>(values) };

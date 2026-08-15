@@ -208,6 +208,10 @@ public sealed class GraderShortAnswerTests
         Assert.False(result.IsCorrect);
     }
 
+    [Fact]
+    public void QuestionType_ReturnsShortAnswer_WhenGraderIsInstantiated()
+        => Assert.Equal(QuestionType.ShortAnswer, _sut.QuestionType);
+
     private static SubmittedAnswer MakeAnswer(params string[] values)
     {
         return new SubmittedAnswer { Values = new List<string>(values) };

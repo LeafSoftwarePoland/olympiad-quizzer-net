@@ -148,6 +148,10 @@ public sealed class GraderTrueFalseTests
         Assert.Equal(0.0, result.MaxPoints);
     }
 
+    [Fact]
+    public void QuestionType_ReturnsTrueFalse_WhenGraderIsInstantiated()
+        => Assert.Equal(QuestionType.TrueFalse, _sut.QuestionType);
+
     private static SubmittedAnswer MakeAnswer(params string[] values)
     {
         return new SubmittedAnswer { Values = new List<string>(values) };
