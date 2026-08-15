@@ -28,7 +28,7 @@ internal static class CorsExtensions
             .AllowAnyMethod();
     }
 
-    private static bool IsAllowedOrigin(string origin)
+    internal static bool IsAllowedOrigin(string origin)
     {
         if (string.IsNullOrWhiteSpace(origin))
         {

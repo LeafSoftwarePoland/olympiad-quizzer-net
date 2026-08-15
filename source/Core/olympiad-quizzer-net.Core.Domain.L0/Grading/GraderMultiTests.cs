@@ -1,7 +1,7 @@
 using OlympiadQuizzer.Core.Tests.Common;
 using OlympiadQuizzer.Core.Domain.Grading;
 using OlympiadQuizzer.Core.Domain.Questions;
-using OlympiadQuizzer.Core.Domain.L0.Builders;
+using OlympiadQuizzer.Core.Tests.Common.Builders;
 
 namespace OlympiadQuizzer.Core.Domain.L0.Grading;
 
@@ -18,7 +18,7 @@ public sealed class GraderMultiTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("A", "C");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderMulti.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
         Assert.Equal(1.0, result.PointsAwarded);
@@ -34,7 +34,7 @@ public sealed class GraderMultiTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("C", "A");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderMulti.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -49,7 +49,7 @@ public sealed class GraderMultiTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("A", "A", "C");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderMulti.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -64,7 +64,7 @@ public sealed class GraderMultiTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("A");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderMulti.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -80,7 +80,7 @@ public sealed class GraderMultiTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("A", "B", "C");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderMulti.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -98,7 +98,7 @@ public sealed class GraderMultiTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("A");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderMulti.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);

@@ -15,7 +15,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Data\dev-questions.json" CopyToOutputDirectory="PreserveNewest" />
+    <InternalsVisibleTo Include="olympiad-quizzer-net.App.API.L1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\..\data\questions.db"
+             Link="data\questions.db"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

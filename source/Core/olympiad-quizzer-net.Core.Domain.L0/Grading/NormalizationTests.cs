@@ -34,7 +34,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeChoice_WithNull_ReturnsEmptyString()
     {
-        string result = Grader.NormalizeChoice(null);
+        string result = Normalization.NormalizeChoice(null);
 
         Assert.Equal(string.Empty, result);
     }
@@ -42,7 +42,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeChoice_WithMixedCase_ReturnsLowercase()
     {
-        string result = Grader.NormalizeChoice("ABC");
+        string result = Normalization.NormalizeChoice("ABC");
 
         Assert.Equal("abc", result);
     }
@@ -50,7 +50,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeChoice_WithLeadingAndTrailingWhitespace_ReturnsTrimmed()
     {
-        string result = Grader.NormalizeChoice("  hello  ");
+        string result = Normalization.NormalizeChoice("  hello  ");
 
         Assert.Equal("hello", result);
     }
@@ -58,7 +58,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeChoice_WithDecomposedPolishDiacritic_ReturnsComposedForm()
     {
-        string result = Grader.NormalizeChoice(_decomposedZWithDotAbove);
+        string result = Normalization.NormalizeChoice(_decomposedZWithDotAbove);
 
         Assert.Equal(_composedZWithDotAbove, result);
     }
@@ -66,7 +66,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeChoice_WithSubscriptDigit_DoesNotFoldIt()
     {
-        string result = Grader.NormalizeChoice(_subscriptSixteen);
+        string result = Normalization.NormalizeChoice(_subscriptSixteen);
 
         Assert.Equal(_subscriptSixteenLower, result);
     }
@@ -74,7 +74,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeChoice_WithInternalDoubleSpace_DoesPreserveIt()
     {
-        string result = Grader.NormalizeChoice("a  b");
+        string result = Normalization.NormalizeChoice("a  b");
 
         Assert.Equal("a  b", result);
     }
@@ -84,7 +84,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeFreeText_WithNull_ReturnsEmptyString()
     {
-        string result = Grader.NormalizeFreeText(null);
+        string result = Normalization.NormalizeFreeText(null);
 
         Assert.Equal(string.Empty, result);
     }
@@ -92,7 +92,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeFreeText_WithSubscriptDigits_ReturnsAsciiEquivalent()
     {
-        string result = Grader.NormalizeFreeText(_subscriptSixteen);
+        string result = Normalization.NormalizeFreeText(_subscriptSixteen);
 
         Assert.Equal("af16", result);
     }
@@ -100,7 +100,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeFreeText_WithSuperscriptDigits_ReturnsAsciiEquivalent()
     {
-        string result = Grader.NormalizeFreeText(_twoSuperscriptTwoSix);
+        string result = Normalization.NormalizeFreeText(_twoSuperscriptTwoSix);
 
         Assert.Equal("226", result);
     }
@@ -108,7 +108,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeFreeText_WithMathematicalItalic_ReturnsLatinEquivalent()
     {
-        string result = Grader.NormalizeFreeText(_mathItalicX);
+        string result = Normalization.NormalizeFreeText(_mathItalicX);
 
         Assert.Equal("x", result);
     }
@@ -116,7 +116,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeFreeText_WithMultipleInternalSpaces_ReturnsSingleSpace()
     {
-        string result = Grader.NormalizeFreeText("a   b");
+        string result = Normalization.NormalizeFreeText("a   b");
 
         Assert.Equal("a b", result);
     }
@@ -124,7 +124,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeFreeText_WithNonBreakingSpace_ReturnsOrdinarySpace()
     {
-        string result = Grader.NormalizeFreeText(_nonBreakingSpaceBetweenAB);
+        string result = Normalization.NormalizeFreeText(_nonBreakingSpaceBetweenAB);
 
         Assert.Equal("a b", result);
     }
@@ -132,7 +132,7 @@ public sealed class NormalizationTests
     [Fact]
     public void NormalizeFreeText_WithPolishDiacritics_DoesPreserveThem()
     {
-        string result = Grader.NormalizeFreeText(_polishWordZolty);
+        string result = Normalization.NormalizeFreeText(_polishWordZolty);
 
         Assert.Equal(_polishWordZolty, result);
         Assert.NotEqual(_polishWordZoltyAscii, result);

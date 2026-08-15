@@ -1,7 +1,7 @@
 using OlympiadQuizzer.Core.Tests.Common;
 using OlympiadQuizzer.Core.Domain.Grading;
 using OlympiadQuizzer.Core.Domain.Questions;
-using OlympiadQuizzer.Core.Domain.L0.Builders;
+using OlympiadQuizzer.Core.Tests.Common.Builders;
 
 namespace OlympiadQuizzer.Core.Domain.L0.Grading;
 
@@ -27,7 +27,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("hello");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -42,7 +42,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("HELLO");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -59,7 +59,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("af16");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -75,7 +75,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("226");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -91,7 +91,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("x");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -107,7 +107,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("a b");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -124,7 +124,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("a b");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -139,7 +139,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("world");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -156,7 +156,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -174,7 +174,7 @@ public sealed class GraderShortAnswerTests
             .Build();
         SubmittedAnswer answer = MakeAnswer(submitted);
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderShortAnswer.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
     }

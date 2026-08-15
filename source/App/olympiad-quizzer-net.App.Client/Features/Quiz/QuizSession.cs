@@ -108,7 +108,15 @@ public sealed class QuizSession
 
         State.Answers[State.CurrentIndex] = answer;
 
-        GradeResult result = Grader.Grade(CurrentQuestion, answer);
+        GradeResult result = CurrentQuestion.Type switch
+        {
+            QuestionType.Single      => GraderSingle.Grade(CurrentQuestion, answer),
+            QuestionType.Multi       => GraderMulti.Grade(CurrentQuestion, answer),
+            QuestionType.ShortAnswer => GraderShortAnswer.Grade(CurrentQuestion, answer),
+            QuestionType.TrueFalse or QuestionType.Ordering or QuestionType.Matching
+                                     => GraderPositional.Grade(CurrentQuestion, answer),
+            _                        => new GradeResult(false, 0, CurrentQuestion.Points)
+        };
 
         return result;
     }

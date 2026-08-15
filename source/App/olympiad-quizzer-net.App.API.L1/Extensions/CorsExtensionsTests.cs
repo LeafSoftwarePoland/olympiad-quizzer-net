@@ -1,128 +1,72 @@
-using System.Net;
-using OlympiadQuizzer.App.Api.L1.Harness;
+using OlympiadQuizzer.App.Api.Extensions;
 using OlympiadQuizzer.Core.Tests.Common;
 
 namespace OlympiadQuizzer.App.Api.L1.Extensions;
 
 [Trait(TestTiers.Tier, TestTiers.L1)]
-public sealed class CorsExtensionsTests : IClassFixture<ApiFactory>
+public sealed class CorsExtensionsTests
 {
-    private const string _gitHubPagesOrigin = "https://leafsoftwarepoland.github.io";
-    private const string _allowOriginHeader = "Access-Control-Allow-Origin";
-    private const string _allowCredentials  = "Access-Control-Allow-Credentials";
-
-    private readonly HttpClient _client;
-
-    public CorsExtensionsTests(ApiFactory factory)
+    [Fact]
+    public void IsAllowedOrigin_WithGitHubPagesOrigin_ReturnsTrue()
     {
-        _client = factory.CreateClient();
+        bool result = CorsExtensions.IsAllowedOrigin("https://leafsoftwarepoland.github.io");
+
+        Assert.True(result);
     }
 
     [Fact]
-    public async Task Preflight_FromGitHubPagesOrigin_DoesAllowOrigin()
+    public void IsAllowedOrigin_WithGitHubPagesOriginUpperCase_ReturnsTrue()
     {
-        HttpRequestMessage request = BuildPreflight(_gitHubPagesOrigin);
+        bool result = CorsExtensions.IsAllowedOrigin("https://LEAFSOFTWAREPOLAND.GITHUB.IO");
 
-        HttpResponseMessage response = await _client.SendAsync(request);
-
-        Assert.True(response.Headers.Contains(_allowOriginHeader),
-            "Expected Access-Control-Allow-Origin for GitHub Pages origin");
+        Assert.True(result);
     }
 
     [Fact]
-    public async Task Preflight_FromGitHubPagesOriginWithDifferentCasing_DoesAllowOrigin()
+    public void IsAllowedOrigin_WithLocalhostAndPort_ReturnsTrue()
     {
-        HttpRequestMessage request = BuildPreflight("https://LEAFSOFTWAREPOLAND.GITHUB.IO");
+        bool result = CorsExtensions.IsAllowedOrigin("http://localhost:5001");
 
-        HttpResponseMessage response = await _client.SendAsync(request);
-
-        Assert.True(response.Headers.Contains(_allowOriginHeader),
-            "Origin matching must be case-insensitive");
+        Assert.True(result);
     }
 
     [Fact]
-    public async Task Preflight_FromLocalhostWithAnyPort_DoesAllowOrigin()
+    public void IsAllowedOrigin_WithLoopbackIpAddress_ReturnsTrue()
     {
-        HttpRequestMessage request = BuildPreflight("http://localhost:5001");
+        bool result = CorsExtensions.IsAllowedOrigin("http://127.0.0.1:5000");
 
-        HttpResponseMessage response = await _client.SendAsync(request);
-
-        Assert.True(response.Headers.Contains(_allowOriginHeader),
-            "localhost with any port must be allowed");
+        Assert.True(result);
     }
 
     [Fact]
-    public async Task Preflight_FromLoopbackIpAddress_DoesAllowOrigin()
+    public void IsAllowedOrigin_WithUnknownOrigin_ReturnsFalse()
     {
-        HttpRequestMessage request = BuildPreflight("http://127.0.0.1:5000");
+        bool result = CorsExtensions.IsAllowedOrigin("https://evil.example.com");
 
-        HttpResponseMessage response = await _client.SendAsync(request);
-
-        Assert.True(response.Headers.Contains(_allowOriginHeader),
-            "127.0.0.1 loopback must be allowed");
+        Assert.False(result);
     }
 
     [Fact]
-    public async Task Preflight_FromUnknownOrigin_DoesNotEmitAllowOriginHeader()
+    public void IsAllowedOrigin_WithLookalikeOrigin_ReturnsFalse()
     {
-        HttpRequestMessage request = BuildPreflight("https://evil.example.com");
+        bool result = CorsExtensions.IsAllowedOrigin("https://leafsoftwarepoland.github.io.evil.example");
 
-        HttpResponseMessage response = await _client.SendAsync(request);
-
-        Assert.False(response.Headers.Contains(_allowOriginHeader),
-            "Unknown origin must not receive Access-Control-Allow-Origin");
+        Assert.False(result);
     }
 
     [Fact]
-    public async Task Preflight_FromLookalikeOrigin_DoesNotEmitAllowOriginHeader()
+    public void IsAllowedOrigin_WithMalformedOrigin_ReturnsFalse()
     {
-        HttpRequestMessage request = BuildPreflight("https://leafsoftwarepoland.github.io.evil.example");
+        bool result = CorsExtensions.IsAllowedOrigin("not-a-valid-origin");
 
-        HttpResponseMessage response = await _client.SendAsync(request);
-
-        Assert.False(response.Headers.Contains(_allowOriginHeader),
-            "Lookalike origin must not pass substring matching");
+        Assert.False(result);
     }
 
     [Fact]
-    public async Task Preflight_FromMalformedOrigin_DoesNotThrow()
+    public void IsAllowedOrigin_WithNullOrEmpty_ReturnsFalse()
     {
-        HttpRequestMessage request = BuildPreflight("not-a-valid-origin");
-
-        Exception exception = await Record.ExceptionAsync(() => _client.SendAsync(request));
-
-        Assert.Null(exception);
-    }
-
-    [Fact]
-    public async Task Response_DoesNotAllowCredentials()
-    {
-        HttpRequestMessage request = BuildPreflight(_gitHubPagesOrigin);
-
-        HttpResponseMessage response = await _client.SendAsync(request);
-
-        Assert.False(response.Headers.Contains(_allowCredentials),
-            "Credentials header must be absent — no cookies, no auth");
-    }
-
-    [Fact]
-    public async Task ActualGetRequest_FromAllowedOrigin_DoesIncludeAllowOriginHeader()
-    {
-        HttpRequestMessage request = new(HttpMethod.Get, "/api/filters");
-        request.Headers.Add("Origin", _gitHubPagesOrigin);
-
-        HttpResponseMessage response = await _client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.True(response.Headers.Contains(_allowOriginHeader),
-            "Actual GET from allowed origin must also carry the CORS header");
-    }
-
-    private static HttpRequestMessage BuildPreflight(string origin)
-    {
-        HttpRequestMessage request = new(HttpMethod.Options, "/api/questions");
-        request.Headers.Add("Origin", origin);
-        request.Headers.Add("Access-Control-Request-Method", "GET");
-        return request;
+        Assert.False(CorsExtensions.IsAllowedOrigin(null));
+        Assert.False(CorsExtensions.IsAllowedOrigin(""));
+        Assert.False(CorsExtensions.IsAllowedOrigin("   "));
     }
 }

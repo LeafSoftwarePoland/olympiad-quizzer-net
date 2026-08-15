@@ -1,7 +1,7 @@
 using OlympiadQuizzer.Core.Tests.Common;
 using OlympiadQuizzer.Core.Domain.Grading;
 using OlympiadQuizzer.Core.Domain.Questions;
-using OlympiadQuizzer.Core.Domain.L0.Builders;
+using OlympiadQuizzer.Core.Tests.Common.Builders;
 
 namespace OlympiadQuizzer.Core.Domain.L0.Grading;
 
@@ -23,7 +23,7 @@ public sealed class GraderSingleTests
             .Build();
         SubmittedAnswer answer = MakeAnswer(_answerYGreaterEqualZ);
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderSingle.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
         Assert.Equal(1.0, result.PointsAwarded);
@@ -39,7 +39,7 @@ public sealed class GraderSingleTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("Y >= Z");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderSingle.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -53,7 +53,7 @@ public sealed class GraderSingleTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("  y >= z  ");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderSingle.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -67,7 +67,7 @@ public sealed class GraderSingleTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("y > z");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderSingle.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -82,7 +82,7 @@ public sealed class GraderSingleTests
             .Build();
         SubmittedAnswer answer = MakeAnswer(_answerYGreaterEqualZ, "x >= z");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderSingle.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -97,7 +97,7 @@ public sealed class GraderSingleTests
             .WithPoints(2)
             .Build();
 
-        GradeResult result = Grader.Grade(question, SubmittedAnswer.Empty);
+        GradeResult result = GraderSingle.Grade(question, SubmittedAnswer.Empty);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -112,7 +112,7 @@ public sealed class GraderSingleTests
             .WithCorrectAnswer(_answerYGreaterEqualZ)
             .Build();
 
-        GradeResult result = Grader.Grade(question, null);
+        GradeResult result = GraderSingle.Grade(question, null);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -127,7 +127,7 @@ public sealed class GraderSingleTests
             .Build();
         SubmittedAnswer answer = MakeAnswer(_answerYGreaterEqualZ);
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderSingle.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -144,7 +144,7 @@ public sealed class GraderSingleTests
             .Build();
         SubmittedAnswer answer = MakeAnswer(_decomposedZWithDot);
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderSingle.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -154,7 +154,7 @@ public sealed class GraderSingleTests
     {
         SubmittedAnswer answer = MakeAnswer(_answerYGreaterEqualZ);
 
-        GradeResult result = Grader.Grade(null, answer);
+        GradeResult result = GraderSingle.Grade(null, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);

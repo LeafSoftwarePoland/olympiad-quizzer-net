@@ -20,6 +20,20 @@ internal static class JsonExtensions
                 o.SerializerOptions.Converters.Add(converter);
             }
         });
+
+        services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(o =>
+        {
+            o.JsonSerializerOptions.PropertyNamingPolicy = JsonOptions.Default.PropertyNamingPolicy;
+            o.JsonSerializerOptions.PropertyNameCaseInsensitive = JsonOptions.Default.PropertyNameCaseInsensitive;
+            o.JsonSerializerOptions.DefaultIgnoreCondition = JsonOptions.Default.DefaultIgnoreCondition;
+            o.JsonSerializerOptions.Encoder = JsonOptions.Default.Encoder;
+
+            foreach (JsonConverter converter in JsonOptions.Default.Converters)
+            {
+                o.JsonSerializerOptions.Converters.Add(converter);
+            }
+        });
+
         return services;
     }
 }

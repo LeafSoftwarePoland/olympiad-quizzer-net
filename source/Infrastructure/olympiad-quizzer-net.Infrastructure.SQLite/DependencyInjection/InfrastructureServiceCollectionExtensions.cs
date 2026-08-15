@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OlympiadQuizzer.Core.Domain.Abstractions;
 using OlympiadQuizzer.Infrastructure.SQLite.Json;
 using OlympiadQuizzer.Infrastructure.SQLite.Randomization;
+using OlympiadQuizzer.Infrastructure.SQLite.Sqlite;
 
 namespace OlympiadQuizzer.Infrastructure.SQLite.DependencyInjection;
 
@@ -15,18 +16,14 @@ public static class InfrastructureServiceCollectionExtensions
             configuration.GetSection(QuestionBankOptions.SectionName));
 
         services.AddSingleton<IShuffler, FisherYatesShuffler>();
-        services.AddSingleton<QuestionBankLoader>();
-        services.AddSingleton<IQuestionRepository, JsonQuestionRepository>();
+        services.AddSingleton<IQuestionRepository, SqliteQuestionRepository>();
 
         return services;
     }
 
-    /// Loads the question bank now. Singleton registration is lazy, so without this call the
-    /// fail-fast read happens on the first request instead of at startup — and a health check
-    /// that never touches the bank would report a broken process as healthy.
     public static IServiceProvider WarmQuestionBank(this IServiceProvider services)
     {
-        services.GetRequiredService<QuestionBankLoader>();
+        services.GetRequiredService<IQuestionRepository>();
         return services;
     }
 }

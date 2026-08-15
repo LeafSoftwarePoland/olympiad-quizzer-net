@@ -3,7 +3,7 @@ using OlympiadQuizzer.Core.Domain.Grading;
 using OlympiadQuizzer.Core.Domain.Queries;
 using OlympiadQuizzer.Core.Domain.Questions;
 using OlympiadQuizzer.Core.Domain.Session;
-using OlympiadQuizzer.Core.Domain.L0.Builders;
+using OlympiadQuizzer.Core.Tests.Common.Builders;
 
 namespace OlympiadQuizzer.Core.Domain.L0.Session;
 

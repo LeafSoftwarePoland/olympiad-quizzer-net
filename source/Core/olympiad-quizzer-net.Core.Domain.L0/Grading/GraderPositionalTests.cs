@@ -1,7 +1,7 @@
 using OlympiadQuizzer.Core.Tests.Common;
 using OlympiadQuizzer.Core.Domain.Grading;
 using OlympiadQuizzer.Core.Domain.Questions;
-using OlympiadQuizzer.Core.Domain.L0.Builders;
+using OlympiadQuizzer.Core.Tests.Common.Builders;
 
 namespace OlympiadQuizzer.Core.Domain.L0.Grading;
 
@@ -21,7 +21,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer(_true, _false, _true);
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
         Assert.Equal(1.0, result.MaxPoints);
@@ -38,7 +38,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer(_true, _true, _true);
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -54,7 +54,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer(_true);
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -71,7 +71,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("b", "a", "c");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -91,7 +91,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("b", "c", "a");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(1.0, result.PointsAwarded, precision: 9);
@@ -110,7 +110,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("b", "c", "a");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);
@@ -126,7 +126,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("Match A", "Match B");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.True(result.IsCorrect);
     }
@@ -145,7 +145,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("Match A", "Match C");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(1.0, result.PointsAwarded, precision: 9);
@@ -160,7 +160,7 @@ public sealed class GraderPositionalTests
             .Build();
         SubmittedAnswer answer = MakeAnswer("any");
 
-        GradeResult result = Grader.Grade(question, answer);
+        GradeResult result = GraderPositional.Grade(question, answer);
 
         Assert.False(result.IsCorrect);
         Assert.Equal(0.0, result.PointsAwarded);

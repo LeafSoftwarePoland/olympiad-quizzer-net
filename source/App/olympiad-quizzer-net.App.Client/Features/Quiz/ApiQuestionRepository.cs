@@ -42,7 +42,7 @@ public sealed class ApiQuestionRepository : IQuestionRepository
 
         parts.Add("limit=" + query.Limit.ToString(CultureInfo.InvariantCulture));
 
-        string url = "api/questions?" + string.Join("&", parts);
+        string url = "v1/questions?" + string.Join("&", parts);
 
         List<Question> questions = await _http.GetFromJsonAsync<List<Question>>(url, JsonOptions.Default, cancellationToken);
 
@@ -51,7 +51,7 @@ public sealed class ApiQuestionRepository : IQuestionRepository
 
     public async Task<FilterOptions> GetFilterOptionsAsync(CancellationToken cancellationToken)
     {
-        FilterOptions options = await _http.GetFromJsonAsync<FilterOptions>("api/filters", JsonOptions.Default, cancellationToken);
+        FilterOptions options = await _http.GetFromJsonAsync<FilterOptions>("v1/filters", JsonOptions.Default, cancellationToken);
 
         return options ?? new FilterOptions();
     }

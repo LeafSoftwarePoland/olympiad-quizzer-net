@@ -11,5 +11,6 @@
   </Folder>
   <Folder Name="/Infrastructure/">
     <Project Path="source/Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite/olympiad-quizzer-net.Infrastructure.SQLite.csproj" />
+    <Project Path="source/Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite.L1/olympiad-quizzer-net.Infrastructure.SQLite.L1.csproj" />
   </Folder>
 </Solution>

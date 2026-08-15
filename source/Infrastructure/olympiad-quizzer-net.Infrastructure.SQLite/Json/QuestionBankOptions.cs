@@ -9,4 +9,7 @@ public sealed class QuestionBankOptions
 
     /// Absolute, or relative to AppContext.BaseDirectory. Mapped to /images for static-file serving.
     public string ImagesPath { get; set; } = Path.Combine("data", "images");
+
+    // Absolute, or relative to AppContext.BaseDirectory. Path to the SQLite database.
+    public string DatabasePath { get; set; } = Path.Combine("data", "questions.db");
 }

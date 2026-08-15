@@ -8,4 +8,8 @@
     <IsPackable>false</IsPackable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\olympiad-quizzer-net.Core.Domain\olympiad-quizzer-net.Core.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

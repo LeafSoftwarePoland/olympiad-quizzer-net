@@ -1,6 +1,6 @@
 using System.Text.Json;
 using OlympiadQuizzer.Core.Tests.Common;
-using OlympiadQuizzer.Core.Domain.L0.Builders;
+using OlympiadQuizzer.Core.Tests.Common.Builders;
 using OlympiadQuizzer.Core.Domain.Questions;
 using OlympiadQuizzer.Core.Domain.Serialization;
 
