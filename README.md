@@ -62,16 +62,22 @@ A content change edits the JSON and regenerates the database in the same commit.
 data/                                       — question bank: questions.json, questions.db, images/
 source/
   Core/
-    olympiad-quizzer-net.Core.Domain/         — domain types, grader, session logic, repository abstraction
+    olympiad-quizzer-net.Core.Domain/         — domain types, grading units, session logic, abstractions, error codes
     olympiad-quizzer-net.Core.Domain.L0/      — domain unit tests (xUnit)
     olympiad-quizzer-net.Core.Tests.Common/   — shared test constants, builders, fixtures
   Infrastructure/
     olympiad-quizzer-net.Infrastructure.SQLite/    — SQLite store, filtering, shuffling, DI extension
+    olympiad-quizzer-net.Infrastructure.SQLite.L0/ — logic above the persistence seam, seam mocked
     olympiad-quizzer-net.Infrastructure.SQLite.L1/ — storage tests against a real database file
   App/
-    olympiad-quizzer-net.App.API/             — ASP.NET Core API, Controllers/, Extensions/, Dockerfile
+    olympiad-quizzer-net.App.API/             — ASP.NET Core API, Controllers/, Extensions/, middleware, Dockerfile
     olympiad-quizzer-net.App.Client/          — Blazor WASM frontend, feature folders
+    olympiad-quizzer-net.App.API.L0/          — controller tests, repository mocked
     olympiad-quizzer-net.App.API.L1/          — controller tests, hand-constructed (no test host)
+    olympiad-quizzer-net.App.API.L2/          — whole app, real pipeline, over HTTP
+  Solution/
+    olympiad-quizzer-net.Solution.DataIntegrityTests/ — the committed artefacts, not code
+    olympiad-quizzer-net.Solution.BankSync/           — console tool: regenerates questions.db from questions.json
 docs/
   adl/          — Architecture Decision Log
   standards/    — coding standards; read every file
