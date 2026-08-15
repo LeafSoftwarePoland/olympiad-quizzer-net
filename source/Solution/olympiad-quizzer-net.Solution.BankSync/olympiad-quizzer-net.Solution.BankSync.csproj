@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>olympiad-quizzer-net.Solution.BankSync</AssemblyName>
+    <RootNamespace>OlympiadQuizzer.Solution.BankSync</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\olympiad-quizzer-net.Core.Domain\olympiad-quizzer-net.Core.Domain.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\olympiad-quizzer-net.Infrastructure.SQLite\olympiad-quizzer-net.Infrastructure.SQLite.csproj" />
+  </ItemGroup>
+
+</Project>

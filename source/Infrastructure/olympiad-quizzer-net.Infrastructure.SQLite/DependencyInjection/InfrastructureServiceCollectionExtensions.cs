@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OlympiadQuizzer.Core.Domain.Abstractions;
-using OlympiadQuizzer.Infrastructure.SQLite.Json;
 using OlympiadQuizzer.Infrastructure.SQLite.Randomization;
 using OlympiadQuizzer.Infrastructure.SQLite.Sqlite;
 
@@ -16,6 +15,7 @@ public static class InfrastructureServiceCollectionExtensions
             configuration.GetSection(QuestionBankOptions.SectionName));
 
         services.AddSingleton<IShuffler, FisherYatesShuffler>();
+        services.AddSingleton<IQuestionStore, SqliteQuestionStore>();
         services.AddSingleton<IQuestionRepository, SqliteQuestionRepository>();
 
         return services;

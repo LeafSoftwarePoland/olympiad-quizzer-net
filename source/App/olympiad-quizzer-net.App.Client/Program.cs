@@ -4,6 +4,7 @@ using OlympiadQuizzer.App.Client.Features.Quiz;
 using OlympiadQuizzer.App.Client.Features.Settings;
 using OlympiadQuizzer.App.Client.Shared.Services;
 using OlympiadQuizzer.Core.Domain.Abstractions;
+using OlympiadQuizzer.Core.Domain.Grading;
 
 namespace OlympiadQuizzer.App.Client;
 
@@ -32,6 +33,17 @@ public class Program
         {
             BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
         });
+
+        IQuestionGrader[] graders =
+        [
+            new GraderSingle(),
+            new GraderMulti(),
+            new GraderShortAnswer(),
+            new GraderTrueFalse(),
+            new GraderOrdering(),
+            new GraderMatching()
+        ];
+        builder.Services.AddSingleton(new GraderDispatcher(graders));
 
         builder.Services.AddScoped<IQuestionRepository, ApiQuestionRepository>();
         builder.Services.AddScoped<LocalStorageService>();

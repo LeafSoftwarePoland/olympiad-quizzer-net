@@ -91,7 +91,25 @@ referenced-assembly set as a second line of defence".
   validate and does not convert, because neither is its responsibility — it receives what is
   already prepared. Connection-level faults it may handle; **data-level faults bubble**, because
   interpreting them is a decision for a ring that knows what the data means.
-- The external is reached through a **thin, mockable seam**: the abstraction in Domain, the
-  implementation in Infrastructure. Consequence, and the reason this is recorded rather than left
-  implicit — Infrastructure becomes L0-testable above the seam, which was impossible while I/O and
-  logic were welded together in one class.
+- **Two seams, nested — and they are not the same seam.** Conflating them is the reading this
+  bullet exists to prevent.
+
+  | | Declared in | Implemented in | Speaks | Domain sees it |
+  |---|---|---|---|---|
+  | **Outer** — the repository abstraction (ADR-002) | **Domain** | Infrastructure, and separately in the frontend | domain types only | yes — Domain owns it |
+  | **Inner** — the I/O seam | Infrastructure | Infrastructure | row types | **never** |
+
+  The outer seam is what ADR-002 mandates and what the Decision above means by Domain owning the
+  abstraction. Domain states *"this is where questions come from"* and knows nothing of how they
+  are delivered.
+
+  The inner seam is Infrastructure's own business. Its row types are shaped by the storage engine,
+  so they must not cross into Domain; the mapping from row to domain object happens in the
+  repository implementation, below the outer seam.
+
+  **The L0-testability of Infrastructure is bought by the inner seam, not the outer one.** Mocking
+  it puts the repository's real logic — filtering, clamping, shuffle-then-cap — under test with no
+  database present, which was impossible while I/O and logic were welded together in one class. An
+  earlier wording of this bullet described a single seam and credited it with both roles; read
+  literally, that demanded the row-level abstraction live in Domain, which would drag storage-shaped
+  types into the one ring that must not have them.

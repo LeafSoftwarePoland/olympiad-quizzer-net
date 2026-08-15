@@ -59,11 +59,6 @@ public static class QuizSessionValidator
                 return false;
             }
 
-            if (question.Type == QuestionType.Unknown)
-            {
-                return false;
-            }
-
             if (question.Content == null || question.Content.Count == 0)
             {
                 return false;

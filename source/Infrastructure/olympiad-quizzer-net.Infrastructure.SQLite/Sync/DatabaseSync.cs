@@ -5,7 +5,6 @@ using Dapper;
 using Microsoft.Data.Sqlite;
 using OlympiadQuizzer.Core.Domain.Questions;
 using OlympiadQuizzer.Core.Domain.Serialization;
-using OlympiadQuizzer.Infrastructure.SQLite.Json;
 
 namespace OlympiadQuizzer.Infrastructure.SQLite.Sync;
 
@@ -254,7 +253,7 @@ public static class DatabaseSync
             QuestionType.TrueFalse   => "trueFalse",
             QuestionType.Ordering    => "ordering",
             QuestionType.Matching    => "matching",
-            _                        => "unknown"
+            _                        => throw new ArgumentOutOfRangeException(nameof(type), type, "Unrecognised question type.")
         };
     }
 

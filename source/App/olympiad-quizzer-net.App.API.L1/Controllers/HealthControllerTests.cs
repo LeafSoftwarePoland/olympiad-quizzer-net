@@ -13,8 +13,10 @@ public sealed class HealthControllerTests
     [Fact]
     public void Get_ReturnsOkWithOkTrue()
     {
+        // Act
         IActionResult result = _controller.Get();
 
+        // Assert
         OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
         string json = JsonSerializer.Serialize(ok.Value);
         using JsonDocument doc = JsonDocument.Parse(json);
@@ -22,12 +24,15 @@ public sealed class HealthControllerTests
     }
 
     [Fact]
-    public void Get_WithoutRenderGitCommitVariable_ReturnsCommitAsLocal()
+    public void Get_ReturnsCommitAsLocal_WhenRenderGitCommitVariableIsAbsent()
     {
+        // Arrange
         Environment.SetEnvironmentVariable("RENDER_GIT_COMMIT", null);
 
+        // Act
         IActionResult result = _controller.Get();
 
+        // Assert
         OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
         string json = JsonSerializer.Serialize(ok.Value);
         using JsonDocument doc = JsonDocument.Parse(json);

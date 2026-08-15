@@ -13,39 +13,49 @@ public sealed class QuizSessionValidatorTests
     private static readonly DateTimeOffset _now = DateTimeOffset.UtcNow;
 
     [Fact]
-    public void IsValid_WithNullState_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenStateIsNull()
     {
+        // Act
         bool result = QuizSessionValidator.IsValid(null, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithUnknownSchemaVersion_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenSchemaVersionIsUnrecognised()
     {
+        // Arrange
+        const int unrecognisedSchemaVersion = 99;
         QuizSessionState state = ValidState(1);
-        state.SchemaVersion = 99;
+        state.SchemaVersion = unrecognisedSchemaVersion;
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithZeroQuestions_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenQuestionListIsEmpty()
     {
+        // Arrange
         QuizSessionState state = ValidState(1);
         state.Questions = [];
         state.Answers   = [];
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithMoreQuestionsThanMaxLimit_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenQuestionCountExceedsMaxLimit()
     {
+        // Arrange
         int count = QuestionQuery.MaxLimit + 1;
         List<Question> questions = [.. Enumerable.Range(1, count).Select(i => QuestionBuilder.AQuestion().WithId(i).Build())];
         List<SubmittedAnswer> answers = [.. Enumerable.Range(0, count).Select(_ => SubmittedAnswer.Empty)];
@@ -54,104 +64,120 @@ public sealed class QuizSessionValidatorTests
         state.Questions = questions;
         state.Answers   = answers;
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithAnswerCountNotMatchingQuestionCount_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenAnswerCountDoesNotMatchQuestionCount()
     {
+        // Arrange
         QuizSessionState state = ValidState(2);
         state.Answers.Add(SubmittedAnswer.Empty);
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithNegativeCurrentIndex_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenCurrentIndexIsNegative()
     {
+        // Arrange
         QuizSessionState state = ValidState(2);
         state.CurrentIndex = -1;
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithCurrentIndexBeyondLastQuestion_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenCurrentIndexExceedsLastQuestion()
     {
-        QuizSessionState state = ValidState(2);
-        state.CurrentIndex = 2;
+        // Arrange
+        int questionCount = 2;
+        QuizSessionState state = ValidState(questionCount);
+        state.CurrentIndex = questionCount;
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithStartTimestampInTheFuture_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenStartTimestampIsInTheFuture()
     {
+        // Arrange
         QuizSessionState state = ValidState(1);
         state.StartedAtUtc = _now.AddMinutes(10);
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithTamperedStartTimestampMovedBackwards_ReturnsTrueAndTimerReadsExpired()
+    public void IsValid_ReturnsTrueAndTimerReadsExpired_WhenStartTimestampIsMovedFarBackwards()
     {
+        // Arrange
         // Start recorded as 2 hours ago. Timed session with 60-minute limit.
         // IsValid must accept this: "too far in past" is not a validity condition.
         // ExamTimer.Remaining must return zero, not negative.
+        const int timeLimitMinutes = 60;
+        const int minutesPastStart = 120;
         QuizSessionState state = ValidState(1);
         state.Timed            = true;
-        state.TimeLimitMinutes = 60;
-        state.StartedAtUtc     = _now.AddMinutes(-120);
+        state.TimeLimitMinutes = timeLimitMinutes;
+        state.StartedAtUtc     = _now.AddMinutes(-minutesPastStart);
 
-        bool isValid    = QuizSessionValidator.IsValid(state, _now);
-        TimeSpan timer  = ExamTimer.Remaining(state, _now);
+        // Act
+        bool isValid   = QuizSessionValidator.IsValid(state, _now);
+        TimeSpan timer = ExamTimer.Remaining(state, _now);
 
+        // Assert
         Assert.True(isValid);
         Assert.Equal(TimeSpan.Zero, timer);
     }
 
     [Fact]
-    public void IsValid_WithQuestionOfUnknownType_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenQuestionInListIsNull()
     {
-        QuizSessionState state = ValidState(2);
-        state.Questions[0] = QuestionBuilder.AQuestion().WithType(QuestionType.Unknown).Build();
-
-        bool result = QuizSessionValidator.IsValid(state, _now);
-
-        Assert.False(result);
-    }
-
-    [Fact]
-    public void IsValid_WithNullElementInQuestionsList_ReturnsFalse()
-    {
+        // Arrange
         QuizSessionState state = ValidState(1);
         state.Questions[0] = null;
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 
     [Fact]
-    public void IsValid_WithAbsurdTimeLimit_ReturnsFalse()
+    public void IsValid_ReturnsFalse_WhenTimeLimitIsAboveMaximum()
     {
+        // Arrange
+        const int excessiveTimeLimitMinutes = 601;
         QuizSessionState state = ValidState(1);
         state.Timed            = true;
-        state.TimeLimitMinutes = 601;
+        state.TimeLimitMinutes = excessiveTimeLimitMinutes;
 
+        // Act
         bool result = QuizSessionValidator.IsValid(state, _now);
 
+        // Assert
         Assert.False(result);
     }
 

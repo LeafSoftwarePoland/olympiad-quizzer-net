@@ -12,17 +12,21 @@ public sealed class RobotsControllerTests
     [Fact]
     public void Get_ReturnsContentResultWithTextPlain()
     {
+        // Act
         IActionResult result = _controller.Get();
 
+        // Assert
         ContentResult content = Assert.IsType<ContentResult>(result);
         Assert.Equal("text/plain", content.ContentType);
     }
 
     [Fact]
-    public void Get_Body_DoesDisallowEverything()
+    public void Get_DoesDisallowAll_WhenBodyIsRead()
     {
+        // Act
         IActionResult result = _controller.Get();
 
+        // Assert
         ContentResult content = Assert.IsType<ContentResult>(result);
         Assert.Contains("Disallow: /", content.Content);
     }

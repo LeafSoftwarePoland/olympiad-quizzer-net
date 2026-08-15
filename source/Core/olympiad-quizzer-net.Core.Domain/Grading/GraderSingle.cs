@@ -2,9 +2,11 @@ using OlympiadQuizzer.Core.Domain.Questions;
 
 namespace OlympiadQuizzer.Core.Domain.Grading;
 
-public static class GraderSingle
+public sealed class GraderSingle : IQuestionGrader
 {
-    public static GradeResult Grade(Question question, SubmittedAnswer answer)
+    public QuestionType QuestionType => QuestionType.Single;
+
+    public GradeResult Grade(Question question, SubmittedAnswer answer)
     {
         if (question == null)
         {

@@ -25,7 +25,7 @@ public static class JsonOptions
         // JsonStringEnumConverter intentionally omitted: QuestionType carries a type-level
         // [JsonConverter] attribute pointing at QuestionTypeConverter. Adding a generic factory
         // here for enum types causes it to win over the attribute in .NET 10 and breaks the
-        // Unknown-on-unrecognised-string semantics. Add per-type attributes for any future enum.
+        // throw-on-unrecognised-string semantics. Add per-type attributes for any future enum.
 
         return options;
     }

@@ -15,7 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="olympiad-quizzer-net.App.API.L0" />
     <InternalsVisibleTo Include="olympiad-quizzer-net.App.API.L1" />
+    <InternalsVisibleTo Include="olympiad-quizzer-net.App.API.L2" />
   </ItemGroup>
 
   <ItemGroup>

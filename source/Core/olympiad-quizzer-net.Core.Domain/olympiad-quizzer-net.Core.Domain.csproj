@@ -9,4 +9,11 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <Target Name="AssertDomainHasNoDependencies" BeforeTargets="Build">
+    <Error Condition="'@(ProjectReference)' != ''"
+           Text="Domain must have zero project references. Found: @(ProjectReference)" />
+    <Error Condition="'@(PackageReference)' != ''"
+           Text="Domain must have zero package references. Found: @(PackageReference)" />
+  </Target>
+
 </Project>

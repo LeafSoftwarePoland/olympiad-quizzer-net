@@ -10,12 +10,15 @@ namespace OlympiadQuizzer.Core.Domain.L0.Serialization;
 public sealed class QuestionSerializationTests
 {
     [Fact]
-    public void Serialize_Question_DoesUseCamelCaseKeys()
+    public void Serialize_DoesUseCamelCaseKeys_WhenQuestionHasPascalCaseProperties()
     {
+        // Arrange
         Question question = QuestionBuilder.AFullyPopulatedQuestion().Build();
 
+        // Act
         string json = JsonSerializer.Serialize(question, JsonOptions.Default);
 
+        // Assert
         Assert.Contains("\"correctAnswer\"", json);
         Assert.Contains("\"sourceUrl\"", json);
         Assert.Contains("\"sourceRaw\"", json);
@@ -25,23 +28,29 @@ public sealed class QuestionSerializationTests
     }
 
     [Fact]
-    public void Serialize_Question_DoesNotEmitSnakeCaseSourceRaw()
+    public void Serialize_DoesNotEmitSnakeCaseKeys_WhenPropertyNamesArePascalCase()
     {
+        // Arrange
         Question question = QuestionBuilder.AFullyPopulatedQuestion().Build();
 
+        // Act
         string json = JsonSerializer.Serialize(question, JsonOptions.Default);
 
+        // Assert
         Assert.DoesNotContain("\"source_raw\"", json);
         Assert.Contains("\"sourceRaw\"", json);
     }
 
     [Fact]
-    public void Serialize_Question_DoesNotEmitRemovedPocFields()
+    public void Serialize_DoesNotEmitRemovedPocFields_WhenQuestionHasOnlyCurrentFields()
     {
+        // Arrange
         Question question = QuestionBuilder.AFullyPopulatedQuestion().Build();
 
+        // Act
         string json = JsonSerializer.Serialize(question, JsonOptions.Default);
 
+        // Assert
         Assert.DoesNotContain("\"tags\"", json);
         Assert.DoesNotContain("\"sourceUrls\"", json);
         Assert.DoesNotContain("\"competition\"", json);
@@ -49,120 +58,164 @@ public sealed class QuestionSerializationTests
     }
 
     [Fact]
-    public void Deserialize_QuestionTypeSingle_ReturnsSingleType()
+    public void Deserialize_ReturnsSingleType_WhenTypeIsSingle()
     {
-        string json = BuildMinimalQuestionJson("single");
+        // Arrange
+        const string typeName = "single";
+        string json = BuildMinimalQuestionJson(typeName);
 
+        // Act
         Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
 
+        // Assert
         Assert.Equal(QuestionType.Single, question.Type);
     }
 
     [Fact]
-    public void Deserialize_QuestionTypeShortAnswer_ReturnsShortAnswerType()
+    public void Deserialize_ReturnsShortAnswerType_WhenTypeIsShortAnswer()
     {
-        string json = BuildMinimalQuestionJson("shortAnswer");
+        // Arrange
+        const string typeName = "shortAnswer";
+        string json = BuildMinimalQuestionJson(typeName);
 
+        // Act
         Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
 
+        // Assert
         Assert.Equal(QuestionType.ShortAnswer, question.Type);
     }
 
     [Fact]
-    public void Deserialize_LegacyTypeNameSingleAbcd_ReturnsUnknownType()
+    public void Deserialize_ThrowsJsonException_WhenTypeIsSingleAbcd()
     {
-        string json = BuildMinimalQuestionJson("singleAbcd");
+        // Arrange
+        const string legacyTypeName = "singleAbcd";
+        string json = BuildMinimalQuestionJson(legacyTypeName);
 
-        Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
-
-        Assert.Equal(QuestionType.Unknown, question.Type);
+        // Act & Assert
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<Question>(json, JsonOptions.Default));
     }
 
     [Fact]
-    public void Deserialize_LegacyTypeNameMultiSelect_ReturnsUnknownType()
+    public void Deserialize_ThrowsJsonException_WhenTypeIsMultiSelect()
     {
-        string json = BuildMinimalQuestionJson("multiSelect");
+        // Arrange
+        const string legacyTypeName = "multiSelect";
+        string json = BuildMinimalQuestionJson(legacyTypeName);
 
-        Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
-
-        Assert.Equal(QuestionType.Unknown, question.Type);
+        // Act & Assert
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<Question>(json, JsonOptions.Default));
     }
 
     [Fact]
-    public void Deserialize_ScraperTypeOpen_ReturnsUnknownType()
+    public void Deserialize_ThrowsJsonException_WhenTypeIsOpen()
     {
-        string json = BuildMinimalQuestionJson("open");
+        // Arrange
+        const string legacyTypeName = "open";
+        string json = BuildMinimalQuestionJson(legacyTypeName);
 
-        Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
-
-        Assert.Equal(QuestionType.Unknown, question.Type);
+        // Act & Assert
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<Question>(json, JsonOptions.Default));
     }
 
     [Fact]
-    public void Deserialize_QuestionWithNullOptions_ReturnsNullOptions()
+    public void Deserialize_ReturnsNullOptions_WhenOptionsAreNull()
     {
-        string json = "{\"id\":1,\"type\":\"single\",\"content\":[],\"correctAnswer\":\"A\",\"options\":null}";
+        // Arrange
+        const string json = "{\"id\":1,\"type\":\"single\",\"content\":[],\"correctAnswer\":\"A\",\"options\":null}";
 
+        // Act
         Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
 
+        // Assert
         Assert.Null(question.Options);
     }
 
     [Fact]
-    public void Deserialize_YearAsJsonNumber_ReturnsNullableInt()
+    public void Deserialize_ReturnsNullableInt_WhenYearIsJsonNumber()
     {
-        string json = "{\"id\":1,\"type\":\"single\",\"content\":[],\"correctAnswer\":\"A\",\"year\":2024}";
+        // Arrange
+        const string json = "{\"id\":1,\"type\":\"single\",\"content\":[],\"correctAnswer\":\"A\",\"year\":2024}";
+        const int expectedYear = 2024;
 
+        // Act
         Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
 
-        Assert.Equal(2024, question.Year);
+        // Assert
+        Assert.Equal(expectedYear, question.Year);
     }
 
     [Fact]
-    public void Deserialize_IdAsJsonNumber_ReturnsIntId()
+    public void Deserialize_ReturnsIntId_WhenIdIsJsonNumber()
     {
-        string json = "{\"id\":42,\"type\":\"single\",\"content\":[],\"correctAnswer\":\"A\"}";
+        // Arrange
+        const string json = "{\"id\":42,\"type\":\"single\",\"content\":[],\"correctAnswer\":\"A\"}";
+        const int expectedId = 42;
 
+        // Act
         Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
 
-        Assert.Equal(42, question.Id);
+        // Assert
+        Assert.Equal(expectedId, question.Id);
+    }
+
+    [Fact]
+    public void Deserialize_ThrowsJsonException_WhenTypeIsUnrecognised()
+    {
+        // Arrange
+        const string unrecognisedTypeName = "neverSeenBefore";
+        string json = BuildMinimalQuestionJson(unrecognisedTypeName);
+
+        // Act & Assert
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<Question>(json, JsonOptions.Default));
+    }
+
+    [Fact]
+    public void Deserialize_ThrowsJsonException_WhenTypeIsNull()
+    {
+        // Arrange
+        const string json = "{\"id\":1,\"type\":null,\"content\":[],\"correctAnswer\":\"A\"}";
+
+        // Act & Assert
+        Assert.Throws<JsonException>(() =>
+            JsonSerializer.Deserialize<Question>(json, JsonOptions.Default));
+    }
+
+    [Fact]
+    public void Deserialize_ReturnsEmptyList_WhenCorrectAnswerIsNull()
+    {
+        // Arrange
+        const string json = "{\"id\":1,\"type\":\"single\",\"content\":[],\"correctAnswer\":null}";
+
+        // Act
+        Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
+
+        // Assert
+        Assert.NotNull(question.CorrectAnswer);
+        Assert.Empty(question.CorrectAnswer);
     }
 
     // Polish diacritics + subscript ₁₆ + superscript ² + mathematical italic x (U+1D465)
     private const string _unicodeRichText = "żółty ₁₆ 2² \U0001D465";
 
     [Fact]
-    public void RoundTrip_QuestionWithPolishAndMathematicalUnicode_DoesPreserveEveryCharacter()
+    public void RoundTrip_DoesPreserveEveryCharacter_WhenTextHasPolishAndMathematicalUnicode()
     {
+        // Arrange
         Question original = QuestionBuilder.AFullyPopulatedQuestion()
             .WithContent(new ContentBlock { Type = ContentBlockType.Text, Text = _unicodeRichText })
             .Build();
 
+        // Act
         string json = JsonSerializer.Serialize(original, JsonOptions.Default);
         Question roundTripped = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
 
+        // Assert
         Assert.Equal(_unicodeRichText, roundTripped.Content[0].Text);
-    }
-
-    [Fact]
-    public void Deserialize_UnrecognisedTypeName_ReturnsUnknownTypeAndDoesNotThrow()
-    {
-        string json = BuildMinimalQuestionJson("neverSeenBefore");
-
-        Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
-
-        Assert.Equal(QuestionType.Unknown, question.Type);
-    }
-
-    [Fact]
-    public void Deserialize_QuestionWithNullCorrectAnswer_ReturnsEmptyList()
-    {
-        string json = "{\"id\":1,\"type\":\"single\",\"content\":[],\"correctAnswer\":null}";
-
-        Question question = JsonSerializer.Deserialize<Question>(json, JsonOptions.Default);
-
-        Assert.NotNull(question.CorrectAnswer);
-        Assert.Empty(question.CorrectAnswer);
     }
 
     private static string BuildMinimalQuestionJson(string typeValue)

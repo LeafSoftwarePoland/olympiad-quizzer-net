@@ -31,10 +31,11 @@ data values rather than code identifiers. Vocabulary lives in `docs/tags.md`.
 
 | Thing | Convention | Example |
 |---|---|---|
-| Types, methods, properties, constants, enum members | PascalCase | `QuestionQuery`, `MaxLimit` |
+| Types, methods, properties, enum members | PascalCase | `QuestionQuery`, `ContentBlock` |
 | Locals, parameters | camelCase | `matchedCount`, `cancellationToken` |
 | Private fields | `_camelCase` | `_shuffler` |
-| File-scoped private constants | `_camelCase` | `_corsPolicyName` |
+| **Public or internal** constants | PascalCase | `MaxLimit` |
+| **Private** constants | `_camelCase` | `_corsPolicyName` |
 | Interfaces | `I` + PascalCase | `IQuestionRepository` |
 | Acronyms | two letters upper, three-plus PascalCase | `IO`, `ID`, but `Api`, `Json`, `Html`, `Url` |
 | `.cs` / `.razor` files | match the single type they contain | one public type per file |
@@ -43,6 +44,12 @@ data values rather than code identifiers. Vocabulary lives in `docs/tags.md`.
 | JSON keys | camelCase | `correctAnswer`, `sourceRaw` |
 | Git branches | kebab-case, English, `type/` prefix | `feature/server-side-filtering` |
 | Browser-storage keys | `oqn.<area>.v<n>` | `oqn.session.v1` |
+
+**Constants split on visibility, not on scope.** `private const string _corsPolicyName`, but
+`public const int MaxLimit`. A private constant is a private field that cannot change, and reads
+like one. An earlier wording said "file-scoped private constants", which named nothing that exists —
+C# has file-scoped namespaces and file-scoped types, never file-scoped constants — so the rule
+covered no case at all and a reviewer could not apply it.
 
 `sourceRaw`, not `source_raw` — camelCase wins for JSON keys.
 

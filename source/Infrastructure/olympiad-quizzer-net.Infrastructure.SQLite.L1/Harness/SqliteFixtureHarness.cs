@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using OlympiadQuizzer.Core.Tests.Common.Harness;
 using OlympiadQuizzer.Infrastructure.SQLite.Sync;
 
 namespace OlympiadQuizzer.Infrastructure.SQLite.L1.Harness;

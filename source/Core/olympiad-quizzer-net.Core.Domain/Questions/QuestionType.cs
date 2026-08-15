@@ -6,11 +6,10 @@ namespace OlympiadQuizzer.Core.Domain.Questions;
 [JsonConverter(typeof(QuestionTypeConverter))]
 public enum QuestionType
 {
-    Unknown = 0,
-    Single,
-    Multi,
-    ShortAnswer,
-    TrueFalse,
-    Ordering,
-    Matching
+    Single      = 1,
+    Multi       = 2,
+    ShortAnswer = 3,
+    TrueFalse   = 4,
+    Ordering    = 5,
+    Matching    = 6
 }

@@ -1,5 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
+using OlympiadQuizzer.App.Api.Middleware;
 using OlympiadQuizzer.Core.Domain.Abstractions;
+using OlympiadQuizzer.Core.Domain.Errors;
 using OlympiadQuizzer.Core.Domain.Queries;
 using OlympiadQuizzer.Core.Domain.Questions;
 
@@ -17,16 +23,9 @@ public sealed class QuestionsController(
         [FromQuery(Name = "algorithms")] string[] algorithms,
         [FromQuery(Name = "year")]       int[]    year,
         [FromQuery(Name = "stage")]      string[] stage,
-        [FromQuery(Name = "limit")]      int?     limit,
+        [FromQuery(Name = "limit")] [Range(1, QuestionQuery.MaxLimit)] int? limit,
         CancellationToken cancellationToken)
     {
-        if (limit.HasValue && (limit.Value < 1 || limit.Value > QuestionQuery.MaxLimit))
-        {
-            logger.LogWarning("Rejected out-of-range limit {Limit}", limit.Value);
-            ModelState.AddModelError("limit", $"limit must be between 1 and {QuestionQuery.MaxLimit}.");
-            return ValidationProblem();
-        }
-
         QuestionQuery query = new()
         {
             Categories = [.. category],
@@ -36,7 +35,54 @@ public sealed class QuestionsController(
             Limit      = limit ?? QuestionQuery.DefaultLimit
         };
 
-        IReadOnlyList<Question> questions = await repository.GetAsync(query, cancellationToken);
-        return Ok(questions);
+        try
+        {
+            IReadOnlyList<Question> questions = await repository.GetAsync(query, cancellationToken);
+            return Ok(questions);
+        }
+        catch (SqliteException e)
+        {
+            logger.LogError(e,
+                "Repository failure during GetAsync. limit={Limit} categories={Categories} " +
+                "algorithms={Algorithms} years={Years} stages={Stages}",
+                query.Limit, string.Join(",", query.Categories), string.Join(",", query.Algorithms),
+                string.Join(",", query.Years), string.Join(",", query.Stages));
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new ErrorResponse(ErrorCodes.Unexpected, HttpContext.TraceIdentifier));
+        }
+        catch (IOException e)
+        {
+            logger.LogError(e,
+                "IO failure during GetAsync. limit={Limit} categories={Categories} " +
+                "algorithms={Algorithms} years={Years} stages={Stages}",
+                query.Limit, string.Join(",", query.Categories), string.Join(",", query.Algorithms),
+                string.Join(",", query.Years), string.Join(",", query.Stages));
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new ErrorResponse(ErrorCodes.Unexpected, HttpContext.TraceIdentifier));
+        }
+        catch (InvalidOperationException e)
+        {
+            logger.LogError(e,
+                "Repository invalid operation during GetAsync. limit={Limit} categories={Categories} " +
+                "algorithms={Algorithms} years={Years} stages={Stages}",
+                query.Limit, string.Join(",", query.Categories), string.Join(",", query.Algorithms),
+                string.Join(",", query.Years), string.Join(",", query.Stages));
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new ErrorResponse(ErrorCodes.Unexpected, HttpContext.TraceIdentifier));
+        }
+        catch (JsonException e)
+        {
+            logger.LogError(e,
+                "JSON failure during GetAsync. limit={Limit} categories={Categories} " +
+                "algorithms={Algorithms} years={Years} stages={Stages}",
+                query.Limit, string.Join(",", query.Categories), string.Join(",", query.Algorithms),
+                string.Join(",", query.Years), string.Join(",", query.Stages));
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new ErrorResponse(ErrorCodes.Unexpected, HttpContext.TraceIdentifier));
+        }
     }
 }

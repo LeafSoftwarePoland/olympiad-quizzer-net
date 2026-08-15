@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using OlympiadQuizzer.App.Api.Controllers;
 using OlympiadQuizzer.App.Api.L1.Harness;
+using OlympiadQuizzer.Core.Domain.Abstractions;
+using OlympiadQuizzer.Core.Domain.Queries;
 using OlympiadQuizzer.Core.Domain.Questions;
 using OlympiadQuizzer.Core.Tests.Common;
 
@@ -25,63 +27,75 @@ public sealed class QuestionsControllerTests
     }
 
     [Fact]
-    public async Task Get_WithNoFilters_ReturnsOkWithNonEmptyArray()
+    public async Task Get_ReturnsOkWithQuestions_WhenNoFiltersGiven()
     {
+        // Act
         IActionResult result = await _controller.Get([], [], [], [], null, CancellationToken.None);
 
+        // Assert
         OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
         IReadOnlyList<Question> questions = Assert.IsAssignableFrom<IReadOnlyList<Question>>(ok.Value);
         Assert.NotEmpty(questions);
     }
 
     [Fact]
-    public async Task Get_WithLimit_ReturnsAtMostLimit()
+    public async Task Get_ReturnsAtMostLimit_WhenLimitIsGiven()
     {
-        IActionResult result = await _controller.Get([], [], [], [], 3, CancellationToken.None);
+        // Arrange
+        const int limit = 3;
 
+        // Act
+        IActionResult result = await _controller.Get([], [], [], [], limit, CancellationToken.None);
+
+        // Assert
         OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
         IReadOnlyList<Question> questions = Assert.IsAssignableFrom<IReadOnlyList<Question>>(ok.Value);
-        Assert.True(questions.Count <= 3, $"Expected <= 3 questions but got {questions.Count}");
+        Assert.True(questions.Count <= limit, $"Expected <= {limit} questions but got {questions.Count}");
     }
 
     [Fact]
-    public async Task Get_WithUnmatchedCategory_ReturnsOkWithEmptyArray()
+    public async Task Get_ReturnsOkWithEmptyArray_WhenCategoryDoesNotExist()
     {
-        IActionResult result = await _controller.Get(
-            ["does_not_exist_category"], [], [], [], null, CancellationToken.None);
+        // Arrange
+        const string nonExistentCategory = "does_not_exist_category";
 
+        // Act
+        IActionResult result = await _controller.Get(
+            [nonExistentCategory], [], [], [], null, CancellationToken.None);
+
+        // Assert
         OkObjectResult ok = Assert.IsType<OkObjectResult>(result);
         IReadOnlyList<Question> questions = Assert.IsAssignableFrom<IReadOnlyList<Question>>(ok.Value);
         Assert.Empty(questions);
     }
 
     [Fact]
-    public async Task Get_WithZeroLimit_ReturnsBadRequest()
+    public async Task Get_BubblesException_WhenRepositoryThrowsUnanticipated()
     {
-        IActionResult result = await _controller.Get([], [], [], [], 0, CancellationToken.None);
+        // Arrange
+        DivideByZeroException expected = new("unexpected repository failure");
+        QuestionsController controller = new(
+            new ThrowingRepository(expected),
+            NullLogger<QuestionsController>.Instance);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
 
-        ObjectResult objectResult = Assert.IsAssignableFrom<ObjectResult>(result);
-        ValidationProblemDetails details = Assert.IsType<ValidationProblemDetails>(objectResult.Value);
-        Assert.True(details.Errors.ContainsKey("limit"), "Expected a 'limit' validation error");
+        // Act
+        DivideByZeroException actual = await Assert.ThrowsAsync<DivideByZeroException>(
+            () => controller.Get([], [], [], [], null, CancellationToken.None));
+
+        // Assert
+        Assert.Same(expected, actual);
     }
 
-    [Fact]
-    public async Task Get_WithNegativeLimit_ReturnsBadRequest()
+    private sealed class ThrowingRepository(Exception exception) : IQuestionRepository
     {
-        IActionResult result = await _controller.Get([], [], [], [], -1, CancellationToken.None);
+        public Task<IReadOnlyList<Question>> GetAsync(QuestionQuery query, CancellationToken cancellationToken)
+            => throw exception;
 
-        ObjectResult objectResult = Assert.IsAssignableFrom<ObjectResult>(result);
-        ValidationProblemDetails details = Assert.IsType<ValidationProblemDetails>(objectResult.Value);
-        Assert.True(details.Errors.ContainsKey("limit"), "Expected a 'limit' validation error");
-    }
-
-    [Fact]
-    public async Task Get_WithLimitAboveMax_ReturnsBadRequest()
-    {
-        IActionResult result = await _controller.Get([], [], [], [], 31, CancellationToken.None);
-
-        ObjectResult objectResult = Assert.IsAssignableFrom<ObjectResult>(result);
-        ValidationProblemDetails details = Assert.IsType<ValidationProblemDetails>(objectResult.Value);
-        Assert.True(details.Errors.ContainsKey("limit"), "Expected a 'limit' validation error");
+        public Task<FilterOptions> GetFilterOptionsAsync(CancellationToken cancellationToken)
+            => throw exception;
     }
 }

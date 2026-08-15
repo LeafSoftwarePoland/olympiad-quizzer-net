@@ -1,8 +1,0 @@
-[
-  { "id": 1, "category": ["rekurencja"], "algorithms": [], "olympiad": "OIJ", "stage": "E1",
-    "year": 2023, "source": "OIJ-2023-E1", "sourceUrl": "https://oij.edu.pl/",
-    "explanationSource": "official", "type": "single",
-    "content": [{ "type": "text", "text": "Pytanie testowe 1" }],
-    "options": ["tak", "nie"], "correctAnswer": "tak", "points": 1, "partialCredit": false },
-  null
-]

@@ -1,72 +1,60 @@
 using System.Globalization;
 using System.Text.Json;
-using Dapper;
-using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using OlympiadQuizzer.Core.Domain.Abstractions;
 using OlympiadQuizzer.Core.Domain.Queries;
 using OlympiadQuizzer.Core.Domain.Questions;
 using OlympiadQuizzer.Core.Domain.Serialization;
-using OlympiadQuizzer.Infrastructure.SQLite.Json;
 using OlympiadQuizzer.Infrastructure.SQLite.Randomization;
 
 namespace OlympiadQuizzer.Infrastructure.SQLite.Sqlite;
 
 public sealed class SqliteQuestionRepository : IQuestionRepository
 {
-    private const int SchemaVersion = 1;
     private static readonly StringComparer _tagComparer = StringComparer.OrdinalIgnoreCase;
 
-    private readonly string _databasePath;
+    private readonly IQuestionStore _store;
     private readonly IShuffler _shuffler;
     private readonly ILogger<SqliteQuestionRepository> _logger;
 
-    private readonly List<Question> _allQuestions;
+    private readonly FilterOptions _cachedFilterOptions;
     private readonly HashSet<string> _knownCategories;
     private readonly HashSet<string> _knownAlgorithms;
     private readonly HashSet<string> _knownStages;
     private readonly HashSet<int> _knownYears;
 
     public SqliteQuestionRepository(
-        IOptions<QuestionBankOptions> options,
+        IQuestionStore store,
         IShuffler shuffler,
         ILogger<SqliteQuestionRepository> logger)
     {
-        string configured = options.Value.DatabasePath;
-        string path = Path.IsPathRooted(configured)
-            ? configured
-            : Path.Combine(AppContext.BaseDirectory, configured);
-
-        if (!File.Exists(path))
-        {
-            throw new FileNotFoundException($"Question database not found: {path}");
-        }
-
-        _databasePath = path;
+        _store = store;
         _shuffler = shuffler;
         _logger = logger;
 
-        using (SqliteConnection connection = new($"Data Source={_databasePath};Mode=ReadOnly"))
+        BankSummary summary = _store.LoadSummary();
+
+        IEnumerable<string> allCategories = summary.CategoryJsons.SelectMany(ParseJsonArray);
+        IEnumerable<string> allAlgorithms = summary.AlgorithmJsons.SelectMany(ParseJsonArray);
+
+        _knownCategories = DistinctValues(allCategories);
+        _knownAlgorithms = DistinctValues(allAlgorithms);
+        _knownStages     = DistinctValues(summary.Stages.Select(s => s.Value));
+        _knownYears      = new HashSet<int>(
+            summary.Years.Select(y => int.Parse(y.Value, CultureInfo.InvariantCulture)));
+
+        _cachedFilterOptions = new FilterOptions
         {
-            connection.Open();
-            long version = connection.ExecuteScalar<long>("PRAGMA user_version;");
-            if (version != SchemaVersion)
-            {
-                throw new InvalidOperationException(
-                    $"Database schema version mismatch: expected {SchemaVersion}, found {version}.");
-            }
-        }
+            TotalQuestions = summary.TotalCount,
+            Stages     = [.. summary.Stages],
+            Years      = [.. summary.Years],
+            Categories = CountBy(allCategories),
+            Algorithms = CountBy(allAlgorithms)
+        };
 
-        _allQuestions = LoadAll();
-
-        _knownCategories = DistinctValues(_allQuestions.SelectMany(q => q.Category ?? []));
-        _knownAlgorithms = DistinctValues(_allQuestions.SelectMany(q => q.Algorithms ?? []));
-        _knownStages     = DistinctValues(_allQuestions.Select(q => q.Stage));
-        _knownYears      = new HashSet<int>(_allQuestions.Where(q => q.Year.HasValue).Select(q => q.Year.Value));
-
-        _logger.LogInformation("SqliteQuestionRepository loaded {Count} questions from {Path}",
-            _allQuestions.Count, _databasePath);
+        _logger.LogInformation(
+            "SqliteQuestionRepository initialised: {TotalCount} questions.",
+            summary.TotalCount);
     }
 
     public Task<IReadOnlyList<Question>> GetAsync(QuestionQuery query, CancellationToken cancellationToken)
@@ -82,107 +70,85 @@ public sealed class SqliteQuestionRepository : IQuestionRepository
 
         WarnOnUnknownValues(categories, algorithms, stages, years);
 
-        IEnumerable<Question> candidates = _allQuestions;
+        IReadOnlyList<QuestionCandidate> candidates = _store.SelectCandidates(stages, years);
+
+        IEnumerable<QuestionCandidate> matched = candidates;
 
         if (categories.Count > 0)
         {
-            candidates = candidates.Where(q => HasAny(q.Category, categories));
+            matched = matched.Where(c => HasAny(ParseJsonArray(c.Category), categories));
         }
 
         if (algorithms.Count > 0)
         {
-            candidates = candidates.Where(q => HasAny(q.Algorithms, algorithms));
+            matched = matched.Where(c => HasAny(ParseJsonArray(c.Algorithms), algorithms));
         }
 
-        if (years.Count > 0)
+        List<QuestionCandidate> matchedList = [.. matched];
+        int matchedCount = matchedList.Count;
+
+        // Shuffle before capping: capping first would make the result deterministic by bank order.
+        _shuffler.Shuffle(matchedList);
+
+        IReadOnlyList<int> selectedIds = matchedList.Count > limit
+            ? [.. matchedList.Take(limit).Select(c => c.Id)]
+            : [.. matchedList.Select(c => c.Id)];
+
+        IReadOnlyList<QuestionRow> rows = _store.FetchByIds(selectedIds);
+
+        Dictionary<int, QuestionRow> rowById = [];
+        foreach (QuestionRow row in rows)
         {
-            candidates = candidates.Where(q => q.Year.HasValue && years.Contains(q.Year.Value));
+            rowById[row.Id] = row;
         }
 
-        if (stages.Count > 0)
-        {
-            candidates = candidates.Where(q => q.Stage != null && stages.Contains(q.Stage));
-        }
-
-        List<Question> matched = [.. candidates];
-        int matchedCount = matched.Count;
-
-        _shuffler.Shuffle(matched);
-
-        List<Question> selected = matched.Count > limit
-            ? matched.GetRange(0, limit)
-            : matched;
+        List<Question> result = [.. selectedIds.Where(rowById.ContainsKey).Select(id => FromRow(rowById[id]))];
 
         _logger.LogInformation(
             "Question query served: matched={MatchedCount} returned={ReturnedCount} limit={Limit} " +
             "categories={Categories} algorithms={Algorithms} years={Years} stages={Stages}",
-            matchedCount, selected.Count, limit,
+            matchedCount, result.Count, limit,
             string.Join(",", categories), string.Join(",", algorithms),
             string.Join(",", years), string.Join(",", stages));
 
-        if (selected.Count == 0)
+        if (result.Count == 0)
         {
             _logger.LogWarning("Question query matched nothing.");
         }
 
-        return Task.FromResult<IReadOnlyList<Question>>(selected);
+        return Task.FromResult<IReadOnlyList<Question>>(result);
     }
 
     public Task<FilterOptions> GetFilterOptionsAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
-        FilterOptions options = new()
-        {
-            TotalQuestions = _allQuestions.Count,
-            Categories = CountBy(_allQuestions.SelectMany(q => q.Category ?? [])),
-            Algorithms = CountBy(_allQuestions.SelectMany(q => q.Algorithms ?? [])),
-            Stages     = CountBy(_allQuestions.Select(q => q.Stage)),
-            Years      = CountBy(_allQuestions.Where(q => q.Year.HasValue)
-                                              .Select(q => q.Year.Value.ToString(CultureInfo.InvariantCulture)))
-        };
-
-        return Task.FromResult(options);
-    }
-
-    private List<Question> LoadAll()
-    {
-        using SqliteConnection connection = new($"Data Source={_databasePath};Mode=ReadOnly");
-        connection.Open();
-
-        IEnumerable<QuestionRow> rows = connection.Query<QuestionRow>("SELECT * FROM questions;");
-        List<Question> questions = [];
-        foreach (QuestionRow row in rows)
-        {
-            questions.Add(FromRow(row));
-        }
-        return questions;
+        return Task.FromResult(_cachedFilterOptions);
     }
 
     private static Question FromRow(QuestionRow row)
     {
         return new Question
         {
-            Id                = row.id,
-            Olympiad          = row.olympiad,
-            Stage             = row.stage,
-            Year              = row.year,
-            Difficulty        = row.difficulty,
-            Source            = row.source,
-            SourceUrl         = row.source_url,
-            SourceRaw         = row.source_raw,
-            ExplanationSource = row.explanation_source,
-            Type              = ParseType(row.type),
-            Content           = DeserializeList<ContentBlock>(row.content) ?? [],
-            ContentCpp        = string.IsNullOrEmpty(row.content_cpp) ? null : DeserializeList<ContentBlock>(row.content_cpp),
-            Options           = DeserializeList<string>(row.options) ?? [],
-            MatchOptions      = string.IsNullOrEmpty(row.match_options) ? null : DeserializeList<string>(row.match_options),
-            CorrectAnswer     = DeserializeList<string>(row.correct_answer) ?? [],
-            Category          = DeserializeList<string>(row.category) ?? [],
-            Algorithms        = DeserializeList<string>(row.algorithms) ?? [],
-            Explanation       = string.IsNullOrEmpty(row.explanation) ? null : DeserializeList<ContentBlock>(row.explanation),
-            Points            = row.points,
-            PartialCredit     = row.partial_credit != 0
+            Id                = row.Id,
+            Olympiad          = row.Olympiad,
+            Stage             = row.Stage,
+            Year              = row.Year,
+            Difficulty        = row.Difficulty,
+            Source            = row.Source,
+            SourceUrl         = row.SourceUrl,
+            SourceRaw         = row.SourceRaw,
+            ExplanationSource = row.ExplanationSource,
+            Type              = ParseType(row.Type),
+            Content           = DeserializeList<ContentBlock>(row.Content) ?? [],
+            ContentCpp        = string.IsNullOrEmpty(row.ContentCpp) ? null : DeserializeList<ContentBlock>(row.ContentCpp),
+            Options           = DeserializeList<string>(row.Options) ?? [],
+            MatchOptions      = string.IsNullOrEmpty(row.MatchOptions) ? null : DeserializeList<string>(row.MatchOptions),
+            CorrectAnswer     = DeserializeList<string>(row.CorrectAnswer) ?? [],
+            Category          = DeserializeList<string>(row.Category) ?? [],
+            Algorithms        = DeserializeList<string>(row.Algorithms) ?? [],
+            Explanation       = string.IsNullOrEmpty(row.Explanation) ? null : DeserializeList<ContentBlock>(row.Explanation),
+            Points            = row.Points,
+            PartialCredit     = row.PartialCredit != 0
         };
     }
 
@@ -195,6 +161,15 @@ public sealed class SqliteQuestionRepository : IQuestionRepository
         return JsonSerializer.Deserialize<List<T>>(json, JsonOptions.Default);
     }
 
+    private static IEnumerable<string> ParseJsonArray(string json)
+    {
+        if (string.IsNullOrEmpty(json))
+        {
+            return [];
+        }
+        return JsonSerializer.Deserialize<List<string>>(json, JsonOptions.Default) ?? [];
+    }
+
     private static QuestionType ParseType(string typeString)
     {
         return typeString switch
@@ -205,7 +180,7 @@ public sealed class SqliteQuestionRepository : IQuestionRepository
             "trueFalse"   => QuestionType.TrueFalse,
             "ordering"    => QuestionType.Ordering,
             "matching"    => QuestionType.Matching,
-            _             => QuestionType.Unknown
+            _             => throw new InvalidOperationException($"Unrecognised question type: '{typeString}'.")
         };
     }
 
@@ -257,12 +232,8 @@ public sealed class SqliteQuestionRepository : IQuestionRepository
         return set;
     }
 
-    private static bool HasAny(List<string> questionValues, HashSet<string> wanted)
+    private static bool HasAny(IEnumerable<string> questionValues, HashSet<string> wanted)
     {
-        if (questionValues == null)
-        {
-            return false;
-        }
         foreach (string value in questionValues)
         {
             if (wanted.Contains(value))
@@ -321,30 +292,5 @@ public sealed class SqliteQuestionRepository : IQuestionRepository
                 unknown.Add(parameterName + "=" + value);
             }
         }
-    }
-
-    private sealed class QuestionRow
-    {
-        public int    id                 { get; set; }
-        public string olympiad           { get; set; }
-        public string stage              { get; set; }
-        public int?   year               { get; set; }
-        public int?   difficulty         { get; set; }
-        public string source             { get; set; }
-        public string source_url         { get; set; }
-        public string source_raw         { get; set; }
-        public string explanation_source { get; set; }
-        public string type               { get; set; }
-        public string content            { get; set; }
-        public string content_cpp        { get; set; }
-        public string options            { get; set; }
-        public string match_options      { get; set; }
-        public string correct_answer     { get; set; }
-        public string category           { get; set; }
-        public string algorithms         { get; set; }
-        public string explanation        { get; set; }
-        public int    points             { get; set; }
-        public int    partial_credit     { get; set; }
-        public string content_hash       { get; set; }
     }
 }

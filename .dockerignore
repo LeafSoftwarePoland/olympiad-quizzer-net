@@ -13,5 +13,11 @@ publish-out/
 *.md
 source/Core/olympiad-quizzer-net.Core.Domain.L0/
 source/Core/olympiad-quizzer-net.Core.Tests.Common/
+source/Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite.L0/
+source/Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite.L1/
+source/App/olympiad-quizzer-net.App.API.L0/
 source/App/olympiad-quizzer-net.App.API.L1/
+source/App/olympiad-quizzer-net.App.API.L2/
 source/App/olympiad-quizzer-net.App.Client/
+source/Solution/olympiad-quizzer-net.Solution.DataIntegrityTests/
+source/Solution/olympiad-quizzer-net.Solution.BankSync/

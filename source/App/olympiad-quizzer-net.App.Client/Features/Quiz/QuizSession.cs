@@ -10,11 +10,13 @@ public sealed class QuizSession
 {
     private readonly IQuestionRepository _repository;
     private readonly QuizSessionStore _store;
+    private readonly GraderDispatcher _dispatcher;
 
-    public QuizSession(IQuestionRepository repository, QuizSessionStore store)
+    public QuizSession(IQuestionRepository repository, QuizSessionStore store, GraderDispatcher dispatcher)
     {
         _repository = repository;
         _store = store;
+        _dispatcher = dispatcher;
         Status = QuizSessionStatus.None;
     }
 
@@ -108,17 +110,7 @@ public sealed class QuizSession
 
         State.Answers[State.CurrentIndex] = answer;
 
-        GradeResult result = CurrentQuestion.Type switch
-        {
-            QuestionType.Single      => GraderSingle.Grade(CurrentQuestion, answer),
-            QuestionType.Multi       => GraderMulti.Grade(CurrentQuestion, answer),
-            QuestionType.ShortAnswer => GraderShortAnswer.Grade(CurrentQuestion, answer),
-            QuestionType.TrueFalse or QuestionType.Ordering or QuestionType.Matching
-                                     => GraderPositional.Grade(CurrentQuestion, answer),
-            _                        => new GradeResult(false, 0, CurrentQuestion.Points)
-        };
-
-        return result;
+        return _dispatcher.Grade(CurrentQuestion, answer);
     }
 
     public async Task AdvanceAsync()

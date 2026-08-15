@@ -2,6 +2,7 @@
 @inject QuizSession Session
 @inject QuizSessionStore Store
 @inject NavigationManager Nav
+@inject GraderDispatcher Dispatcher
 
 <HeadContent>
     <meta name="robots" content="noindex" />
@@ -86,15 +87,7 @@ else
         for (int i = 0; i < _state.Questions.Count; i++)
         {
             Question q = _state.Questions[i];
-            GradeResult result = q.Type switch
-            {
-                QuestionType.Single      => GraderSingle.Grade(q, _state.Answers[i]),
-                QuestionType.Multi       => GraderMulti.Grade(q, _state.Answers[i]),
-                QuestionType.ShortAnswer => GraderShortAnswer.Grade(q, _state.Answers[i]),
-                QuestionType.TrueFalse or QuestionType.Ordering or QuestionType.Matching
-                                         => GraderPositional.Grade(q, _state.Answers[i]),
-                _                        => new GradeResult(false, 0, q.Points)
-            };
+            GradeResult result = Dispatcher.Grade(q, _state.Answers[i]);
             _results.Add(result);
 
             _totalPoints += result.PointsAwarded;

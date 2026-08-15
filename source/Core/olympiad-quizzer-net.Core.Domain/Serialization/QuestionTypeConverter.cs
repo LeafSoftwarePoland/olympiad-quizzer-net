@@ -10,7 +10,7 @@ public sealed class QuestionTypeConverter : JsonConverter<QuestionType>
     {
         if (reader.TokenType == JsonTokenType.Null)
         {
-            return QuestionType.Unknown;
+            throw new JsonException("Expected a question-type string; found null.");
         }
 
         if (reader.TokenType != JsonTokenType.String)
@@ -28,8 +28,7 @@ public sealed class QuestionTypeConverter : JsonConverter<QuestionType>
             string s when string.Equals(s, "trueFalse",   StringComparison.OrdinalIgnoreCase) => QuestionType.TrueFalse,
             string s when string.Equals(s, "ordering",    StringComparison.OrdinalIgnoreCase) => QuestionType.Ordering,
             string s when string.Equals(s, "matching",    StringComparison.OrdinalIgnoreCase) => QuestionType.Matching,
-            string s when string.Equals(s, "unknown",     StringComparison.OrdinalIgnoreCase) => QuestionType.Unknown,
-            _ => QuestionType.Unknown
+            _ => throw new JsonException($"Unrecognised question type: '{value}'.")
         };
     }
 
@@ -43,7 +42,7 @@ public sealed class QuestionTypeConverter : JsonConverter<QuestionType>
             QuestionType.TrueFalse   => "trueFalse",
             QuestionType.Ordering    => "ordering",
             QuestionType.Matching    => "matching",
-            _                        => "unknown"
+            _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unrecognised question type.")
         };
 
         writer.WriteStringValue(wireValue);
