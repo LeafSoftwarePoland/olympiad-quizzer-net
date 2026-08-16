@@ -1,7 +1,7 @@
 name: deploy-backend
 run-name: Deploy Backend
 
-# No version input. The version is whatever Directory.Build.props holds on the deployed commit —
+# No version input. The version is whatever Directory.Build.props holds on the deployed commit -
 # set it there and the deploy carries it. A run name cannot read a file, so it stays generic and
 # the resolved version goes to the run summary.
 on:
@@ -46,7 +46,7 @@ jobs:
           if ($r.StatusCode -ne 200) { exit 1 }
 
       # Waiting for a 200 is not enough. When a Render build fails, the previous container keeps
-      # serving and answers /healthz perfectly — so a failed deploy reported success and the old
+      # serving and answers /healthz perfectly - so a failed deploy reported success and the old
       # code stayed live. This waits for the health endpoint to report the commit being deployed.
       - name: Wait for the deployed commit to answer
         shell: powershell
@@ -77,7 +77,7 @@ jobs:
             Start-Sleep -Seconds 15
           }
 
-          Write-Error "Timed out. The API is serving '$lastSeen', not '$expected' — the build most likely failed and the previous container is still running. Check the Render dashboard."
+          Write-Error "Timed out. The API is serving '$lastSeen', not '$expected' - the build most likely failed and the previous container is still running. Check the Render dashboard."
           exit 1
 
   tag:
@@ -94,7 +94,7 @@ jobs:
           # The version no longer comes from tags, so redeploying the same commit is legitimate and
           # must not fail at the last step just because its tag already exists.
           if git ls-remote --exit-code --tags origin "backend-v$VERSION" >/dev/null 2>&1; then
-            echo "Tag backend-v$VERSION already exists — redeploy of an unchanged version." \
+            echo "Tag backend-v$VERSION already exists - redeploy of an unchanged version." \
               >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi

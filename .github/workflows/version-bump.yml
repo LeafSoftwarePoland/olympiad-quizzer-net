@@ -52,7 +52,7 @@ jobs:
           $base = Get-Version ([string]::Join("`n", $baseContent))
 
           if ($branch.Text -ne $base.Text) {
-            "Branch is $($branch.Text), $env:BASE_REF is $($base.Text) — already deliberate, leaving it alone." |
+            "Branch is $($branch.Text), $env:BASE_REF is $($base.Text) - already deliberate, leaving it alone." |
               Tee-Object -FilePath $env:GITHUB_STEP_SUMMARY -Append
             exit 0
           }
