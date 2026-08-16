@@ -69,6 +69,12 @@ h1 { font-size: 1.5rem; }
 h2 { font-size: 1.25rem; }
 h3 { font-size: 1rem; }
 
+/* Sits directly under an h1 as a source or orientation line, before the first section. */
+.page-lead {
+    margin: -0.5rem 0 1.5rem;
+    color: var(--text-dim);
+}
+
 /* Aside to the reader rather than instruction — dimmer, and set off from the list above it. */
 .note {
     color: var(--text-dim);
