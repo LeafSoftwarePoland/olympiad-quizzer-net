@@ -9,8 +9,17 @@ GitHub Actions is the CI/CD platform for this repo. It runs build, test, and dep
 | Workflow | File | Trigger | Runner | Purpose |
 |---|---|---|---|---|
 | CI | `ci.yml` | push / PR to `main` | `self-hosted` | Build + test |
+| Version bump | `version-bump.yml` | `pull_request` (`opened` only) | `ubuntu-latest` | Bump the patch in `Directory.Build.props` when the branch still matches base |
 | Deploy backend | `deploy-backend.yml` | `workflow_dispatch` | `self-hosted` | Trigger Render deploy hook + poll `/healthz` |
 | Deploy frontend | `deploy-frontend.yml` | `workflow_dispatch` | `ubuntu-latest` | Publish WASM → GitHub Pages |
+
+**`version-bump.yml` listens to `opened` and nothing else.** It pushes a commit to the pull-request
+branch, which raises `synchronize`; since no workflow listens to that, the push cannot retrigger the
+bump. Changing the trigger list without re-checking this is how that becomes an infinite loop.
+
+Neither deploy takes a version input. Both read `Directory.Build.props` from the commit being
+deployed (ADR-026 amendment). The tag step skips silently when the tag already exists, so
+redeploying an unchanged commit is not a failure.
 
 ## Self-hosted runner
 

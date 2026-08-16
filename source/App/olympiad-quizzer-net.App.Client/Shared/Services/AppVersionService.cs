@@ -1,62 +1,37 @@
-using System.Net.Http.Json;
-using System.Text.Json;
+using System.Reflection;
 
 namespace OlympiadQuizzer.App.Client.Shared.Services;
 
 public sealed class AppVersionService
 {
-    private readonly HttpClient _http;
-    private readonly ILogger<AppVersionService> _logger;
-    private VersionInfo _info;
+    private readonly string _version;
 
-    public AppVersionService([FromKeyedServices("static")] HttpClient http, ILogger<AppVersionService> logger)
+    public AppVersionService()
     {
-        _http = http;
-        _logger = logger;
-        _info = new VersionInfo();
+        // The version is compiled in from Directory.Build.props, so it is present in every build
+        // including a local one. It used to be fetched from a generated version.json, which the
+        // deploy wrote and local development did not have — so the footer was blank until deploy.
+        Assembly assembly = typeof(AppVersionService).Assembly;
+
+        string informational = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+
+        _version = string.IsNullOrWhiteSpace(informational)
+            ? assembly.GetName().Version?.ToString(3) ?? string.Empty
+            : StripBuildMetadata(informational);
     }
 
-    public async Task<string> GetFrontendVersionAsync()
+    public string GetVersion()
     {
-        await EnsureLoadedAsync();
-        return _info.Frontend ?? string.Empty;
+        return _version;
     }
 
-    public async Task<string> GetBackendVersionAsync()
+    // The SDK appends "+<commit sha>" to the informational version. A student reading a footer
+    // has no use for it.
+    private static string StripBuildMetadata(string informationalVersion)
     {
-        await EnsureLoadedAsync();
-        return _info.Backend ?? string.Empty;
-    }
-
-    private async Task EnsureLoadedAsync()
-    {
-        if (_info.Frontend != null)
-        {
-            return;
-        }
-
-        try
-        {
-            VersionInfo loaded = await _http.GetFromJsonAsync<VersionInfo>("version.json");
-            if (loaded != null)
-            {
-                _info = loaded;
-            }
-        }
-        catch (HttpRequestException ex)
-        {
-            // version.json absent in local dev or first deploy; non-fatal.
-            _logger.LogWarning(ex, "Could not fetch version.json.");
-        }
-        catch (JsonException ex)
-        {
-            _logger.LogWarning(ex, "version.json could not be parsed.");
-        }
-    }
-
-    private sealed class VersionInfo
-    {
-        public string Frontend { get; set; }
-        public string Backend { get; set; }
+        int plusIndex = informationalVersion.IndexOf('+');
+        return plusIndex < 0 ? informationalVersion : informationalVersion[..plusIndex];
     }
 }

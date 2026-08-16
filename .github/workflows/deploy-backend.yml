@@ -1,14 +1,11 @@
 name: deploy-backend
-run-name: >-
-  Deploy Backend ${{ inputs.version != '' && format('v{0}', inputs.version) || '(auto patch bump)' }}
+run-name: Deploy Backend
 
+# No version input. The version is whatever Directory.Build.props holds on the deployed commit —
+# set it there and the deploy carries it. A run name cannot read a file, so it stays generic and
+# the resolved version goes to the run summary.
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version major.minor.patch — leave empty to auto-bump the patch'
-        required: false
-        default: ''
 
 permissions:
   contents: write     # tag creation needs write
@@ -20,43 +17,19 @@ jobs:
       backend: ${{ steps.resolve.outputs.backend }}
     steps:
       - uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0      # tags are not fetched at depth 1
 
       - id: resolve
-        shell: bash
-        env:
-          REQUESTED: ${{ inputs.version }}
+        shell: pwsh
         run: |
-          set -euo pipefail
-
-          git fetch --tags --force
-
-          if [ -n "$REQUESTED" ]; then
-            if ! printf '%s' "$REQUESTED" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-              echo "::error::Version '$REQUESTED' is not major.minor.patch."
-              exit 1
-            fi
-            if git rev-parse -q --verify "refs/tags/backend-v$REQUESTED" >/dev/null; then
-              echo "::error::Tag backend-v$REQUESTED already exists."
-              exit 1
-            fi
-            backend="$REQUESTED"
-          else
-            latest="$(git tag --list 'backend-v*' | sed 's/^backend-v//' | sort -V | tail -n 1)"
-            if [ -z "$latest" ]; then
-              backend="1.0.0"
-            else
-              major="${latest%%.*}"
-              rest="${latest#*.}"
-              minor="${rest%%.*}"
-              patch="${rest#*.}"
-              backend="$major.$minor.$((patch + 1))"
-            fi
-          fi
-
-          echo "backend=$backend" >> "$GITHUB_OUTPUT"
-          echo "### Deploy Backend v$backend" >> "$GITHUB_STEP_SUMMARY"
+          $ErrorActionPreference = 'Stop'
+          $content = [System.IO.File]::ReadAllText('Directory.Build.props')
+          $match = [regex]::Match($content, '<Version>\s*([0-9]+\.[0-9]+\.[0-9]+)\s*</Version>')
+          if (-not $match.Success) {
+            throw "Directory.Build.props has no three-segment <Version> element."
+          }
+          $version = $match.Groups[1].Value
+          "backend=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "### Deploy Backend v$version" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
 
   deploy:
     needs: [version]
@@ -97,6 +70,13 @@ jobs:
           VERSION: ${{ needs.version.outputs.backend }}
         run: |
           set -euo pipefail
+          # The version no longer comes from tags, so redeploying the same commit is legitimate and
+          # must not fail at the last step just because its tag already exists.
+          if git ls-remote --exit-code --tags origin "backend-v$VERSION" >/dev/null 2>&1; then
+            echo "Tag backend-v$VERSION already exists — redeploy of an unchanged version." \
+              >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "backend-v$VERSION" -m "Backend release v$VERSION"

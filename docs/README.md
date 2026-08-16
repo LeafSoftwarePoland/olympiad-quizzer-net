@@ -57,3 +57,38 @@ A new ADR beats an amendment when the decision reverses entirely, the technology
 1. Add an entry to `docs/functionalities.md`.
 2. Add a row to the Changelog section at the bottom.
 3. No separate commit requirement — may be part of the feature commit.
+
+---
+
+## Change-impact checklist
+
+**Run this after any change that alters how something works, not just what it does.** It exists
+because the same omission kept recurring: the code changed, one document was updated, and three
+others went on describing the old behaviour. A document that confidently states something untrue is
+worse than a missing one — the next reader believes it.
+
+Work top to bottom. Most rows will not apply; the point is to have looked.
+
+| # | Check | Where |
+|---|---|---|
+| 1 | Does an ADR record the decision you just changed? | `docs/adl/` — append an amendment, never edit the body |
+| 2 | Did the ADR's one-line description in the index go stale? | `docs/adl/INDEX.md` — row text, Status, and the "Last updated" line |
+| 3 | Does another ADR cite the one you amended? | `grep -rn "ADR-0NN" docs/` — a citation may now point at superseded text |
+| 4 | Did a workflow, trigger, runner or permission change? | `docs/integrations/github-actions.md` — the workflow table |
+| 5 | Did anything about hosting, the deploy path or an endpoint change? | `docs/integrations/github-pages.md`, `render-com.md` |
+| 6 | Is there a user-visible behaviour change? | `docs/functionalities.md` — entry plus a Changelog row |
+| 7 | Did a rule, convention or enforced practice change? | `docs/standards/` — and `INDEX.md` if a file was added or its scope moved |
+| 8 | Did a layer, project, test tier or dependency direction change? | `docs/architecture-guide.md` |
+| 9 | Did a term change meaning, or a new one appear? | `docs/Glossary.md` |
+| 10 | Did the local-run steps, project list, or `data/` contents change? | root `README.md` |
+| 11 | Did a new top-level file or folder appear? | root `README.md` structure block, and `.gitignore` / `.dockerignore` if it should not ship |
+| 12 | Did a config key, path or default change? | `appsettings*.json`, the `.csproj` content items, and every doc that names the old key |
+| 13 | Is any test asserting the old behaviour — or now asserting nothing? | A rule change usually needs a test change; a test that cannot fail is the defect to look for |
+| 14 | Does a code comment or failure message name the thing you changed? | `grep` for the old name — messages rot silently because nothing compiles against them |
+
+**The two that catch the most.** Row 3, because ADRs cite each other and an amendment does not
+update its citers. Row 14, because a string is invisible to the compiler: an assertion message
+claiming more than the assertion tests reads as a green check over an open question.
+
+**Scope note.** `docs/pocs/` is deliberately exempt. A POC document records what was true during
+that experiment; updating it would falsify the record rather than maintain it.

@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "source\\App\\olympiad-quizzer-net.App.API\\olympiad-quizzer-net.App.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "source\\App\\olympiad-quizzer-net.App.Client\\olympiad-quizzer-net.App.Client.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

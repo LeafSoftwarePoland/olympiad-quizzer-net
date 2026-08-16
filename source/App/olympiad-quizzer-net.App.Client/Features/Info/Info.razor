@@ -28,17 +28,5 @@
 
 <div class="info-section">
     <h2>Wersja</h2>
-    <p>Frontend: @_frontend</p>
-    <p>Backend: @_backend</p>
+    <p>@VersionService.GetVersion()</p>
 </div>
-
-@code {
-    private string _frontend = string.Empty;
-    private string _backend = string.Empty;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _frontend = await VersionService.GetFrontendVersionAsync();
-        _backend = await VersionService.GetBackendVersionAsync();
-    }
-}

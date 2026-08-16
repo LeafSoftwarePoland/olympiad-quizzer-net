@@ -45,7 +45,7 @@ ADRs state **WHAT** was decided and **WHY** — not **HOW**. No class, method, i
 | [ADR-023](ADR-023-solution-layout-and-project-naming.md) | Solution layout and project naming | Accepted | 2026-08-13 |
 | [ADR-024](ADR-024-value-based-answers.md) | Answers are values, not option indices | Accepted | 2026-08-13 |
 | [ADR-025](ADR-025-questions-filter-endpoint-contract.md) | Question filtering endpoint contract | Accepted | 2026-08-14 |
-| [ADR-026](ADR-026-versioning-via-git-tags.md) | Release versioning via git tags, auto patch bump | Accepted | 2026-08-13 |
+| [ADR-026](ADR-026-versioning-via-git-tags.md) | Release versioning — one version in `Directory.Build.props`, auto patch bump on PR open (amended; the filename records the superseded scheme) | Accepted | 2026-08-16 |
 | [ADR-027](ADR-027-main-branch-protection.md) | Protected main branch with a required CI check | Accepted | 2026-08-13 |
 | [ADR-028](ADR-028-robots-txt-two-origins.md) | Crawler control across two origins | Accepted | 2026-08-13 |
 | [ADR-029](ADR-029-question-storage-sqlite.md) | Question storage — SQLite in `data/`, Dapper | Accepted | 2026-08-14 |

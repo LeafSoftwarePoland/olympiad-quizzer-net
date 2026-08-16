@@ -44,3 +44,59 @@ Accepted cons:
 - ADR-027 (branch protection — the constraint that rules out commit-back, and why no tag ruleset exists), ADR-015 (deploys are manual), ADR-005 (the host builds its own image)
 - Run-title contexts: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#run-name
 - Revisit if pre-release or preview channels are ever wanted — that is where a versioning tool starts paying for itself.
+
+## Amendment — 2026-08-16 — the version moves into the repository; tags become release markers
+
+**Overrides:** "Git tags are the source of truth"; the two-version-line model; the per-workflow
+version input and its auto-bump; the con "the API cannot be versioned by the pipeline"; the con
+"the displayed backend version can lag".
+**Adds:** `Directory.Build.props` as the version's home; automatic patch bump when a pull request
+opens.
+
+**Trigger.** Two defects in the tag scheme, both found in use. A missing generated version file
+made the frontend display nothing and left a fresh clone unable to say what it was — and because
+the next version was computed from the newest tag, a repository with no tags would resolve `1.0.0`
+again rather than failing. Nothing in the working tree stated the version, so nothing could be
+reviewed in a pull request.
+
+**One version for the whole solution, in `Directory.Build.props` at the repository root.** MSBuild
+reads that file automatically and every project inherits it, so the number is compiled into each
+assembly rather than applied from outside at deploy time.
+
+Two versions were considered and rejected. Separate lines per deployable earn their keep when the
+deployables live in separate repositories and move independently; here one commit produces both,
+so two numbers describing one tree is bookkeeping without a reader.
+
+The solution file cannot hold this. `.slnx` lists projects and configurations and carries no
+MSBuild properties, so a version written there would never reach a build.
+
+**The patch bumps when a pull request opens**, and only when the branch's version still equals the
+base branch's. A version that already differs was set deliberately and is left alone — that is how
+a minor or major is taken: edit the file, and the automation stays out of the way.
+
+The bump is a commit pushed to the pull request branch, so **a developer must pull before
+continuing work on that branch**. The workflow listens to `opened` only; the push it makes raises
+`synchronize`, which nothing listens to, so it cannot retrigger itself.
+
+**Consequences that resolve earlier cons:**
+
+- The API is now versioned like everything else. It no longer needs a build argument the host
+  cannot supply, because the version is already inside the assembly it builds.
+- The displayed version cannot lag behind a deploy — the client reads its own assembly rather than
+  a file written by a workflow, so it is correct in local development too.
+- The generated version file is gone, and with it the class of failure where its absence showed a
+  blank version or silently reset the sequence.
+
+**Tags survive as release markers, not as truth.** Each deploy still tags what it shipped, prefixed
+per deployable, so "which version is live on each side" stays answerable. A tag that already exists
+is now skipped rather than failing the run, because redeploying an unchanged commit is legitimate
+once the version no longer comes from the tag.
+
+Accepted cons:
+
+- A bot commit lands on the branch, so a stale local checkout is a pull away from a conflict on one
+  line of one file.
+- The run name still cannot carry the version — it is evaluated before any job runs and cannot read
+  a file. The resolved version goes to the run summary, as before.
+- Frontend and backend can be deployed from different commits and therefore report different
+  versions despite sharing one line. The tags record which is which.

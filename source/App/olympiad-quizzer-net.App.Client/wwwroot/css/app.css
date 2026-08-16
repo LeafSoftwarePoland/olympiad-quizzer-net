@@ -69,6 +69,14 @@ h1 { font-size: 1.5rem; }
 h2 { font-size: 1.25rem; }
 h3 { font-size: 1rem; }
 
+/* Aside to the reader rather than instruction — dimmer, and set off from the list above it. */
+.note {
+    color: var(--text-dim);
+    border-left: 2px solid var(--border);
+    padding-left: 0.75rem;
+    margin-top: 1rem;
+}
+
 p {
     max-width: 70ch;
     margin-bottom: 0.9rem;
@@ -396,7 +404,13 @@ legend {
 
 .footer-version { color: var(--text-dim); font-size: 0.75rem; }
 
+/* The counter and the timer are two independent facts. Without the split they
+   render as adjacent inline spans and read as one number ("z 3" + "28:35"). */
 .quiz-progress-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
     margin-bottom: 0.75rem;
 }
 

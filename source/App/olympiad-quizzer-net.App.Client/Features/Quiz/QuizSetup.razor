@@ -18,6 +18,17 @@
 {
     <div class="resume-banner">
         <p>Masz zapisaną sesję quizu. Czy chcesz ją wznowić?</p>
+        <p class="note">
+            @_savedQuestionCount @QuestionWord(_savedQuestionCount),
+            @if (_savedTimed)
+            {
+                @($"limit {_savedTimeLimitMinutes} min, pozostało {_savedRemaining:mm\\:ss}")
+            }
+            else
+            {
+                @("bez limitu czasu")
+            }
+        </p>
         <button class="btn" @onclick="ResumeSession">Wznów quiz</button>
         <button class="btn" @onclick="DiscardSession">Zacznij od nowa</button>
     </div>
@@ -87,6 +98,10 @@
     private string _errorHeading;
     private string _errorDetail;
     private bool _hasResumableSession;
+    private int _savedQuestionCount;
+    private bool _savedTimed;
+    private int _savedTimeLimitMinutes;
+    private TimeSpan _savedRemaining;
 
     protected override async Task OnInitializedAsync()
     {
@@ -104,6 +119,33 @@
 
         QuizSessionState saved = await Store.TryLoadAsync();
         _hasResumableSession = saved != null;
+
+        if (saved != null)
+        {
+            // A saved session keeps the settings it was created with, which may no longer match
+            // the ones above it on this page. Surfacing them stops a stale session looking like
+            // a fresh one that ignored the current settings.
+            _savedQuestionCount   = saved.Questions.Count;
+            _savedTimed           = saved.Timed;
+            _savedTimeLimitMinutes = saved.TimeLimitMinutes;
+            _savedRemaining       = ExamTimer.Remaining(saved, DateTimeOffset.UtcNow);
+        }
+    }
+
+    private static string QuestionWord(int count)
+    {
+        if (count == 1)
+        {
+            return "pytanie";
+        }
+
+        int lastTwo = count % 100;
+        int last = count % 10;
+
+        // Polish plurals: 2-4 takes the "pytania" form, except in the teens.
+        bool takesFewForm = last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14);
+
+        return takesFewForm ? "pytania" : "pytań";
     }
 
     private async Task ResumeSession()

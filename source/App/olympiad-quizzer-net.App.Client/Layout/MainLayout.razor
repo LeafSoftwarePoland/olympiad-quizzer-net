@@ -10,17 +10,17 @@
 </main>
 
 <footer class="app-footer">
-    <span>LeafSoftware Tomasz Mankin &copy; 2026</span>
-    @if (!string.IsNullOrEmpty(_frontendVersion))
+    <span>Tomasz Mankin &copy; 2026</span>
+    @if (!string.IsNullOrEmpty(_version))
     {
-        <span class="footer-version">v@_frontendVersion</span>
+        <span class="footer-version">v@_version</span>
     }
 </footer>
 
 <ToastHost />
 
 @code {
-    private string _frontendVersion = string.Empty;
+    private string _version => VersionService.GetVersion();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -31,9 +31,6 @@
 
         await Prefs.LoadAsync();
         await ApplyPreferencesAsync();
-
-        _frontendVersion = await VersionService.GetFrontendVersionAsync();
-        StateHasChanged();
     }
 
     private async Task ApplyPreferencesAsync()
