@@ -7,7 +7,7 @@
        Bumped automatically when a pull request opens, and only when the branch still matches main.
        Set it by hand to take a minor or major, and the automation leaves it alone. -->
   <PropertyGroup>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
   </PropertyGroup>
 
 </Project>
