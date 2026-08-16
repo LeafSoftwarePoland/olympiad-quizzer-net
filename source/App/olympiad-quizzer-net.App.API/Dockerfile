@@ -1,6 +1,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
+# Carries <Version>. MSBuild treats a missing Directory.Build.props as "no properties" rather than
+# an error, so without this line the image builds fine and silently ships the SDK's default version.
+COPY Directory.Build.props                      .
+
 COPY source/Core/                               source/Core/
 COPY source/Infrastructure/                     source/Infrastructure/
 COPY source/App/olympiad-quizzer-net.App.API/   source/App/olympiad-quizzer-net.App.API/
