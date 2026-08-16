@@ -219,7 +219,7 @@ jobs:
 | CORS frontend → backend works | ✅ PASS | GitHub Pages → Render.com, no issues |
 | `/healthz` returns 200 | ✅ PASS | Cold start ~35s; UptimeRobot keeps it warm |
 | No credit card required / $0 cost confirmed | ✅ PASS | Render.com free tier: no card, no card-verification hold |
-| Self-hosted runner executed pipelines | ✅ PASS | Dell Latitude 5501 runner, both workflows |
+| Self-hosted runner executed pipelines | ✅ PASS | Self-hosted Windows runner, both workflows |
 
 **Issues found (all fixed):**
 

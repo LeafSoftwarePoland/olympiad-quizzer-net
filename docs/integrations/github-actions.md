@@ -23,7 +23,7 @@ redeploying an unchanged commit is not a failure.
 
 ## Self-hosted runner
 
-The CI and backend deploy jobs run on a Dell Latitude laptop registered as a self-hosted GitHub Actions runner.
+The CI and backend deploy jobs run on a Windows laptop registered as a self-hosted GitHub Actions runner.
 
 **Why self-hosted:**
 - No GitHub-hosted runner minutes consumed for frequent CI builds.
@@ -81,7 +81,7 @@ Pinned to exact patch versions, not floating majors. Reason: the published tags 
 
 ## Gotchas
 
-- **Runner offline**: all `self-hosted` jobs block silently. Check if the Dell Latitude is on and the runner service is running.
+- **Runner offline**: all `self-hosted` jobs block silently. Check that the runner machine is on and the runner service is running.
 - **Docker on self-hosted**: not available. `build-docker` job is intentionally omitted from `ci.yml`. Render deploy exercises the Dockerfile.
 - **setup-dotnet on self-hosted**: removed from `ci.yml` because the action needs write access to `C:\Program Files\dotnet`. SDK is pre-installed globally.
 - **tar/bsdtar on self-hosted Windows**: blocks `upload-pages-artifact`. Solved by running frontend deploy on `ubuntu-latest`. See ADR-017.

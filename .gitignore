@@ -75,3 +75,8 @@ publish-out/
 # Client static-asset fingerprint manifests (regenerated on every build)
 **/wwwroot/*.staticwebassets.endpoints.json
 .claude
+# Visual Studio per-user state (added 2026-08-16)
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
