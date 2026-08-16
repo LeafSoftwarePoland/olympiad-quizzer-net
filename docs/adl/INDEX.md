@@ -1,6 +1,7 @@
 # Architecture Decision Log
 
-Last updated: 2026-08-15 — ADR-031 and ADR-032 added; ADR-012, ADR-023 and ADR-029 amended.
+Last updated: 2026-08-16 — ADR-026 amended and retitled (the version moved into the repository);
+ADR-005 amended (its build-argument remark no longer constrains versioning).
 
 The 2026-08-14 cleanup rewrote bodies, folded in amendments, deleted dead decisions and renumbered the log with no gaps. That was a one-time hard fix. **Amendments are now the only way to change an ADR.**
 
@@ -24,7 +25,7 @@ ADRs state **WHAT** was decided and **WHY** — not **HOW**. No class, method, i
 | [ADR-002](ADR-002-question-repository-abstraction.md) | Question repository abstraction | Accepted | 2026-08-08 |
 | [ADR-003](ADR-003-single-unified-app.md) | Single unified app for OIJ and voivodeship konkursy | Accepted | 2026-08-08 |
 | [ADR-004](ADR-004-github-pages-hosting.md) | GitHub Pages for WASM static hosting | Accepted | 2026-08-08 |
-| [ADR-005](ADR-005-render-com-api-hosting.md) | Render.com for API hosting | Accepted | 2026-08-08 |
+| [ADR-005](ADR-005-render-com-api-hosting.md) | Render.com for API hosting | Accepted | 2026-08-16 |
 | [ADR-006](ADR-006-oracle-cloud-deferred.md) | Oracle Cloud Always Free — deferred | Deferred | 2026-08-08 |
 | [ADR-007](ADR-007-unified-question-schema.md) | Unified question schema | Accepted | 2026-08-13 |
 | [ADR-008](ADR-008-excluded-sources-and-competitions.md) | Excluded sources and competition types | Accepted | 2026-08-08 |

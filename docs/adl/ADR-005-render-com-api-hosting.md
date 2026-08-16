@@ -40,3 +40,21 @@ Accepted cons:
 - Free plan limits: https://render.com/docs/free
 - The host builds the image from the repository itself in response to a deploy trigger, so the pipeline cannot inject build arguments. Consequence for versioning: ADR-026.
 - Re-evaluate ADR-006 if 512 MB becomes insufficient.
+
+## Amendment — 2026-08-16 — the build-argument constraint no longer constrains versioning
+
+**Overrides:** the second half of the Remarks line "the pipeline cannot inject build arguments.
+Consequence for versioning: ADR-026."
+**Adds:** nothing. Every part of the Decision stands unchanged.
+
+**The constraint itself is still real.** The host pulls the repository and builds the image itself
+in response to a deploy trigger, so no workflow can pass a build argument into that build.
+
+**What changed is that versioning no longer needs one.** The version lives in
+`Directory.Build.props` and is compiled into every assembly, so it is already inside the image the
+host builds. The API reports its own version because it carries it, not because anything injected
+it (ADR-026 amendment).
+
+Read the original line as a statement about build arguments only. It was written when the version
+came from a git tag resolved by the deploy workflow, which is what made an uninjectable build a
+versioning problem.
