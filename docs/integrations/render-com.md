@@ -16,6 +16,30 @@ Deploy is triggered manually via `deploy-backend.yml` (`workflow_dispatch`). The
 
 Render never auto-deploys from git push — deploy hook only.
 
+### Service settings that live only in the Render dashboard
+
+There is no `render.yaml`, so these are **not** in version control and nothing in the repository
+validates them. A rename in the repository silently invalidates them until the next deploy fails.
+
+| Setting | Value |
+|---|---|
+| Dockerfile Path | `source/App/olympiad-quizzer-net.App.API/Dockerfile` |
+| Docker Build Context Directory | `.` — the repository root |
+| Root Directory | blank |
+| Build command | blank |
+| Port | `10000` |
+| Branch | `main` |
+
+**The build context must be the repository root**, not the API folder. The Dockerfile copies
+`source/Core/`, `source/Infrastructure/`, `Directory.Build.props` and `data/`, all of which sit
+above the API project.
+
+This bit once, for real: the ADR-023 rename took the project from
+`olympiad-quizzer-net.API` to `olympiad-quizzer-net.App.API`, the dashboard kept the old path, and
+the first deploy after the rename failed with
+`lstat .../source/App/olympiad-quizzer-net.API: no such file or directory`. The code was correct
+and the deploy was still broken, because the path lives somewhere no test can reach.
+
 ### Dockerfile (multi-stage)
 
 ```
