@@ -540,6 +540,35 @@ legend {
     max-width: 30ch;
 }
 
+/* Sits below the toast host so a toast raised while the notice is still up stacks above it
+   rather than landing underneath. Wider than a toast because it is read, not glanced at. */
+.privacy-notice {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 890;
+    max-width: 38ch;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    background: var(--bg-code);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.privacy-notice p {
+    margin: 0 0 0.75rem;
+}
+
+/* On a narrow screen the fixed corner would cover most of the question, so it spans instead. */
+@media (max-width: 640px) {
+    .privacy-notice {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        max-width: none;
+    }
+}
+
 .toast-success { border-color: var(--accent); color: var(--accent); }
 .toast-error { border-color: var(--verdict-red); color: var(--verdict-red); }
 .toast-info { border-color: var(--text-dim); }

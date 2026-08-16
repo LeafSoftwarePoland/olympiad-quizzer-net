@@ -19,6 +19,7 @@ public sealed class PreferencesService
 
     public string Theme => _current.Theme;
     public float FontScale => _current.FontScale;
+    public bool PrivacyNoticeAcknowledged => _current.PrivacyNoticeAcknowledged;
 
     public async Task LoadAsync()
     {
@@ -30,6 +31,13 @@ public sealed class PreferencesService
 
         _current.Theme = SanitizeTheme(loaded.Theme);
         _current.FontScale = ClampFontScale(loaded.FontScale);
+        _current.PrivacyNoticeAcknowledged = loaded.PrivacyNoticeAcknowledged;
+    }
+
+    public async Task AcknowledgePrivacyNoticeAsync()
+    {
+        _current.PrivacyNoticeAcknowledged = true;
+        await SaveAsync();
     }
 
     public async Task SetThemeAsync(string theme)

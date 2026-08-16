@@ -14,6 +14,7 @@ What lives in `docs/` and how to maintain it.
 | Competition rules | `docs/rules/` | Machine-readable + human-readable competition rules per olympiad | `docs/rules/README.md` |
 | Tag vocabulary | `docs/tags.md` | The controlled `category[]` / `algorithms[]` values. Authoritative — the integrity suite validates the bank against it | See file header |
 | Architecture guide | `docs/architecture-guide.md` | Layer definitions, test levels, document hierarchy | Self-describing |
+| Development guide | `docs/development.md` | Local run, project structure, deploy. English, for contributors — the root `README.md` is Polish and for users | Self-describing |
 | Coding standards | `docs/standards/` | How code is written and reviewed. Enforced at every PR. | `docs/standards/INDEX.md` |
 
 `docs/standards/INDEX.md` is a **map, not a substitute** — anyone writing code reads every file it lists, in full.
@@ -80,8 +81,9 @@ Work top to bottom. Most rows will not apply; the point is to have looked.
 | 7 | Did a rule, convention or enforced practice change? | `docs/standards/` — and `INDEX.md` if a file was added or its scope moved |
 | 8 | Did a layer, project, test tier or dependency direction change? | `docs/architecture-guide.md` |
 | 9 | Did a term change meaning, or a new one appear? | `docs/Glossary.md` |
-| 10 | Did the local-run steps, project list, or `data/` contents change? | root `README.md` |
-| 11 | Did a new top-level file or folder appear? | root `README.md` structure block, and `.gitignore` / `.dockerignore` if it should not ship |
+| 10 | Did the local-run steps, project list, or `data/` contents change? | `docs/development.md` |
+| 11 | Did a new top-level file or folder appear? | `docs/development.md` structure block, and `.gitignore` / `.dockerignore` if it should not ship |
+| 11a | Did anything change that a **user** would notice — privacy, accessibility, what is stored in their browser? | root `README.md` (Polish, user-facing) |
 | 12 | Did a config key, path or default change? | `appsettings*.json`, the `.csproj` content items, and every doc that names the old key |
 | 13 | Is any test asserting the old behaviour — or now asserting nothing? | A rule change usually needs a test change; a test that cannot fail is the defect to look for |
 | 14 | Does a code comment or failure message name the thing you changed? | `grep` for the old name — messages rot silently because nothing compiles against them |
