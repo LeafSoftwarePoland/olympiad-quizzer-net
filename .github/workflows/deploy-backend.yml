@@ -32,6 +32,7 @@ jobs:
           "### Deploy Backend v$version" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
 
   deploy:
+    name: Deploy Backend v${{ needs.version.outputs.backend }}
     needs: [version]
     runs-on: self-hosted
     steps:
@@ -61,6 +62,7 @@ jobs:
           exit 1
 
   tag:
+    name: Tag backend-v${{ needs.version.outputs.backend }}
     needs: [version, deploy]
     runs-on: ubuntu-latest
     steps:

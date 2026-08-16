@@ -38,6 +38,7 @@ jobs:
           "### Deploy Frontend v$version" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
 
   build:
+    name: Build Frontend v${{ needs.version.outputs.version }}
     needs: [version]
     runs-on: ubuntu-latest
     steps:
@@ -76,7 +77,8 @@ jobs:
           path: publish-out/wwwroot
 
   deploy:
-    needs: [build]
+    name: Deploy Frontend v${{ needs.version.outputs.version }}
+    needs: [version, build]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -86,6 +88,7 @@ jobs:
         uses: actions/deploy-pages@v5.0.0
 
   tag:
+    name: Tag frontend-v${{ needs.version.outputs.version }}
     needs: [version, deploy]
     runs-on: ubuntu-latest
     steps:

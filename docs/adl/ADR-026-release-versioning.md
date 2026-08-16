@@ -1,7 +1,12 @@
-# ADR-026: Release versioning via git tags, auto patch bump
+# ADR-026: Release versioning — one version in the repository, auto patch bump
 
 **Status:** Accepted
 **Date:** 2026-08-13
+
+**Title and filename corrected 2026-08-16.** Both read "via git tags", which the amendment at the
+foot of this file reverses. A heading that contradicts its own decision misleads before anyone
+reaches the text that corrects it. The Problem, Considered and Decision sections below are
+unedited and describe the **superseded** scheme — read the amendment for what holds today.
 
 ## Problem
 
