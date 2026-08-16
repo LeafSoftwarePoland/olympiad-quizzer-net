@@ -27,7 +27,7 @@ else if (_state != null && _currentQuestion != null)
                               : remaining.TotalSeconds <= 300 ? "timer-display timer-warning"
                               : "timer-display";
             <span class="@timerClass" aria-label="Pozostały czas">
-                @FormatRemaining(remaining)
+                @ExamTimer.Format(remaining)
             </span>
         }
     </div>
@@ -100,15 +100,6 @@ else if (_state != null && _currentQuestion != null)
         {
             StartTimer();
         }
-    }
-
-    // Total minutes, not the TimeSpan minutes component. "mm" counts 0-59, so a 90-minute limit
-    // rendered as "30:00" — the hour was formatted away and the timer looked like it had been set
-    // to a third of the real limit.
-    private static string FormatRemaining(TimeSpan remaining)
-    {
-        int totalMinutes = (int)remaining.TotalMinutes;
-        return $"{totalMinutes:D2}:{remaining.Seconds:D2}";
     }
 
     private void LoadCurrentQuestion()

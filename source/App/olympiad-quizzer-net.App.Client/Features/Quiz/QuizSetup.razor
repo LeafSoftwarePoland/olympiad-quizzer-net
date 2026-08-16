@@ -22,7 +22,7 @@
             @_savedQuestionCount @QuestionWord(_savedQuestionCount),
             @if (_savedTimed)
             {
-                @($"limit {_savedTimeLimitMinutes} min, pozostało {FormatRemaining(_savedRemaining)}")
+                @($"limit {_savedTimeLimitMinutes} min, pozostało {ExamTimer.Format(_savedRemaining)}")
             }
             else
             {
@@ -130,14 +130,6 @@
             _savedTimeLimitMinutes = saved.TimeLimitMinutes;
             _savedRemaining       = ExamTimer.Remaining(saved, DateTimeOffset.UtcNow);
         }
-    }
-
-    // Total minutes, not the TimeSpan minutes component: "mm" counts 0-59, so anything over an
-    // hour silently loses the hour and reads as far less time than remains.
-    private static string FormatRemaining(TimeSpan remaining)
-    {
-        int totalMinutes = (int)remaining.TotalMinutes;
-        return $"{totalMinutes:D2}:{remaining.Seconds:D2}";
     }
 
     private static string QuestionWord(int count)

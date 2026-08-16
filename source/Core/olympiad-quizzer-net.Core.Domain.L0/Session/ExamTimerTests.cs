@@ -68,6 +68,45 @@ public sealed class ExamTimerTests
         Assert.Equal(TimeSpan.Zero, remaining);
     }
 
+    // Regression: the display used a "mm\:ss" format, whose minutes component counts 0-59. The
+    // hour was discarded, so a 90-minute limit read as "30:00" and a 120-minute one as "00:00".
+    [Theory]
+    [InlineData(90, 0, "90:00")]
+    [InlineData(89, 57, "89:57")]
+    [InlineData(120, 0, "120:00")]
+    [InlineData(60, 0, "60:00")]
+    [InlineData(59, 59, "59:59")]
+    [InlineData(30, 0, "30:00")]
+    [InlineData(5, 3, "05:03")]
+    [InlineData(0, 45, "00:45")]
+    [InlineData(0, 0, "00:00")]
+    public void Format_CountsEveryRemainingMinute_WhenRemainingSpansAnHourOrMore(
+        int minutes, int seconds, string expected)
+    {
+        // Arrange
+        TimeSpan remaining = new(0, minutes, seconds);
+
+        // Act
+        string formatted = ExamTimer.Format(remaining);
+
+        // Assert
+        Assert.Equal(expected, formatted);
+    }
+
+    [Fact]
+    public void Format_ReturnsZero_WhenRemainingIsNegative()
+    {
+        // Arrange
+        const string expired = "00:00";
+        TimeSpan overdue = TimeSpan.FromMinutes(-5);
+
+        // Act
+        string formatted = ExamTimer.Format(overdue);
+
+        // Assert
+        Assert.Equal(expired, formatted);
+    }
+
     private static QuizSessionState TimedState(DateTimeOffset startedAt, int timeLimitMinutes)
     {
         return new QuizSessionState
