@@ -19,7 +19,8 @@ else
     <p class="summary-score">@_correct / @_state.Questions.Count poprawnych — @_totalPoints.ToString("G3") / @_maxPoints.ToString("G3") pkt</p>
     <h1>Wynik quizu</h1>
 
-    <table class="breakdown-table">
+    <div class="table-scroll">
+        <table class="breakdown-table">
         <thead>
             <tr>
                 <th scope="col">#</th>
@@ -42,7 +43,8 @@ else
                 </tr>
             }
         </tbody>
-    </table>
+        </table>
+    </div>
 
     <div class="summary-actions">
         <button class="btn" @onclick="RestartAsync">Jeszcze raz</button>

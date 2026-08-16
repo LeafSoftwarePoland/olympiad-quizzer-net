@@ -232,10 +232,17 @@ pre code {
     margin-bottom: 0.5rem;
 }
 
+/* Wide content scrolls inside its own container rather than making the page scroll sideways.
+   At 1.4x text on a 375px screen the four columns no longer fit. */
+.table-scroll {
+    overflow-x: auto;
+    margin-top: 1.5rem;
+}
+
 .breakdown-table {
     width: 100%;
+    min-width: 22rem;
     border-collapse: collapse;
-    margin-top: 1.5rem;
     font-size: 0.88rem;
 }
 
@@ -365,8 +372,18 @@ pre code {
 .font-controls { display: flex; gap: 0.5rem; padding: 0.25rem 1rem; justify-content: flex-end; }
 .btn-sm { padding: 0.2rem 0.6rem; font-size: 0.8rem; }
 
-nav, .nav-links { display: flex; gap: 1.5rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
-.nav-links a { color: var(--text-dim); text-decoration: none; }
+/* wrap, or a narrow screen pushes the last links off the edge with no way to reach them. */
+nav, .nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+}
+
+/* A label is one target. Without this a two-word link breaks across lines and reads as two. */
+.nav-links a { color: var(--text-dim); text-decoration: none; white-space: nowrap; }
 .nav-links a:hover, .nav-links a.active { color: var(--accent); }
 .nav-links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -377,7 +394,18 @@ nav, .nav-links { display: flex; gap: 1.5rem; padding: 0.75rem 1rem; border-bott
 .info-section a:hover { text-decoration: underline; }
 
 @media (max-width: 560px) {
-    html, body { font-size: 16px; }
+    /* Must keep --font-scale. A bare "font-size: 16px" here silently disabled the text-size
+       setting on every phone — the control moved, the page did not. */
+    html { font-size: calc(16px * var(--font-scale)); }
+
+    nav, .nav-links { gap: 0.4rem 1rem; padding: 0.6rem 0.75rem; }
+
+    /* Label above the control rather than beside it: at 8rem plus a 180px slider the value was
+       pushed past the right edge and clipped. */
+    .settings-row { flex-wrap: wrap; gap: 0.5rem; }
+    .settings-label { min-width: 100%; }
+    .range-input { width: auto; flex: 1 1 8rem; }
+
     .options-list li { min-height: 44px; }
     .options-list input[type="checkbox"],
     .options-list input[type="radio"] { width: 22px; height: 22px; }
