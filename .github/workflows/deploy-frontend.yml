@@ -1,10 +1,14 @@
 name: deploy-frontend
+run-name: Deploy Frontend
 
+# No version input. The version is whatever Directory.Build.props holds on the deployed commit —
+# set it there and the deploy carries it. A run name cannot read a file, so it stays generic and
+# the resolved version goes to the run summary.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write     # was: read — tag creation needs write
   pages: write
   id-token: write
 
@@ -13,7 +17,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - id: resolve
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $content = [System.IO.File]::ReadAllText('Directory.Build.props')
+          $match = [regex]::Match($content, '<Version>\s*([0-9]+\.[0-9]+\.[0-9]+)\s*</Version>')
+          if (-not $match.Success) {
+            throw "Directory.Build.props has no three-segment <Version> element."
+          }
+          $version = $match.Groups[1].Value
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "### Deploy Frontend v$version" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+
   build:
+    name: Build Frontend v${{ needs.version.outputs.version }}
+    needs: [version]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
@@ -24,7 +50,7 @@ jobs:
 
       - name: Publish
         shell: pwsh
-        run: dotnet publish source/client/OlympiadQuizzer.Client.csproj -c Release -o publish-out
+        run: dotnet publish source/App/olympiad-quizzer-net.App.Client/olympiad-quizzer-net.App.Client.csproj -c Release -o publish-out
 
       - name: Rewrite base href, inject API URL, add Pages files
         shell: pwsh
@@ -40,20 +66,19 @@ jobs:
           [System.IO.File]::WriteAllText($index, $html, $utf8NoBom)
 
           Copy-Item $index (Join-Path $root "404.html") -Force
-
           [System.IO.File]::WriteAllText((Join-Path $root ".nojekyll"), "", $utf8NoBom)
 
           $cfg = '{ "ApiBaseUrl": "' + $env:RENDER_API_URL.TrimEnd('/') + '" }'
           [System.IO.File]::WriteAllText((Join-Path $root "appsettings.json"), $cfg, $utf8NoBom)
 
-          Get-Content (Join-Path $root "appsettings.json")
 
       - uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: publish-out/wwwroot
 
   deploy:
-    needs: build
+    name: Deploy Frontend v${{ needs.version.outputs.version }}
+    needs: [version, build]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -61,3 +86,26 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5.0.0
+
+  tag:
+    name: Tag frontend-v${{ needs.version.outputs.version }}
+    needs: [version, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          # The version no longer comes from tags, so redeploying the same commit is legitimate and
+          # must not fail at the last step just because its tag already exists.
+          if git ls-remote --exit-code --tags origin "frontend-v$VERSION" >/dev/null 2>&1; then
+            echo "Tag frontend-v$VERSION already exists — redeploy of an unchanged version." \
+              >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "frontend-v$VERSION" -m "Frontend release v$VERSION"
+          git push origin "frontend-v$VERSION"

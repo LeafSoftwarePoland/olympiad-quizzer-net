@@ -1,15 +1,23 @@
 <Solution>
-  <Folder Name="/source/" />
-  <Folder Name="/source/api/">
-    <Project Path="source/api/OlympiadQuizzer.Api.csproj" />
+  <Folder Name="/App/">
+    <Project Path="source/App/olympiad-quizzer-net.App.API/olympiad-quizzer-net.App.API.csproj" />
+    <Project Path="source/App/olympiad-quizzer-net.App.Client/olympiad-quizzer-net.App.Client.csproj" />
+    <Project Path="source/App/olympiad-quizzer-net.App.API.L0/olympiad-quizzer-net.App.API.L0.csproj" />
+    <Project Path="source/App/olympiad-quizzer-net.App.API.L1/olympiad-quizzer-net.App.API.L1.csproj" />
+    <Project Path="source/App/olympiad-quizzer-net.App.API.L2/olympiad-quizzer-net.App.API.L2.csproj" />
   </Folder>
-  <Folder Name="/source/client/">
-    <Project Path="source/client/OlympiadQuizzer.Client.csproj" />
+  <Folder Name="/Core/">
+    <Project Path="source/Core/olympiad-quizzer-net.Core.Domain/olympiad-quizzer-net.Core.Domain.csproj" />
+    <Project Path="source/Core/olympiad-quizzer-net.Core.Domain.L0/olympiad-quizzer-net.Core.Domain.L0.csproj" />
+    <Project Path="source/Core/olympiad-quizzer-net.Core.Tests.Common/olympiad-quizzer-net.Core.Tests.Common.csproj" />
   </Folder>
-  <Folder Name="/source/shared/">
-    <Project Path="source/shared/OlympiadQuizzer.Shared.csproj" />
+  <Folder Name="/Infrastructure/">
+    <Project Path="source/Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite/olympiad-quizzer-net.Infrastructure.SQLite.csproj" />
+    <Project Path="source/Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite.L0/olympiad-quizzer-net.Infrastructure.SQLite.L0.csproj" />
+    <Project Path="source/Infrastructure/olympiad-quizzer-net.Infrastructure.SQLite.L1/olympiad-quizzer-net.Infrastructure.SQLite.L1.csproj" />
   </Folder>
-  <Folder Name="/source/tests/">
-    <Project Path="source/tests/OlympiadQuizzer.Tests.csproj" />
+  <Folder Name="/Solution/">
+    <Project Path="source/Solution/olympiad-quizzer-net.Solution.DataIntegrityTests/olympiad-quizzer-net.Solution.DataIntegrityTests.csproj" />
+    <Project Path="source/Solution/olympiad-quizzer-net.Solution.BankSync/olympiad-quizzer-net.Solution.BankSync.csproj" />
   </Folder>
 </Solution>

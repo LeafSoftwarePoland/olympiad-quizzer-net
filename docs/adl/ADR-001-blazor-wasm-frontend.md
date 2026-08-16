@@ -5,33 +5,29 @@
 
 ## Problem
 
-Need frontend framework. Current prototype in Flask (Python). App requires interactive elements (ordering, matching questions). Developer's main language is C#. Long-term maintainability priority.
+Need a frontend framework. Prototype was Flask/Python. App needs interactive question types (ordering, matching). Maintainer's language is C#. Long-term maintainability over fast start.
 
 ## Considered
 
-- **Flask (Python, current)** — working prototype, fast start. No compile-time safety. Grows messy for complex interactive UIs. Interpreted — errors only at runtime.
-- **Blazor Server** — full C#, server renders HTML, WebSocket for interactivity. Per-connection ~250–500 KB RAM. Stateful — restart kills sessions. Cold start = blank page for 30–60s.
-- **Blazor WASM** — C# compiled to WebAssembly, runs in browser. Stateless. Static files on CDN. ~3–4 MB first-load (compressed, cached after).
-- **TypeScript + React/Vue** — strong typing, large ecosystem. Separate language from backend. Two codebases to maintain.
+- **Flask (Python, the prototype)** — works today. No compile-time safety; errors surface at runtime only; grows messy on complex interactive UI.
+- **Blazor Server** — full C#, server renders. Per-connection RAM, stateful, restart kills live sessions, cold start shows a blank page.
+- **Blazor WASM** — C# compiled to WebAssembly, runs in the browser. Stateless, publishes as static files. Multi-MB first load.
+- **TypeScript + React/Vue** — large ecosystem, strong typing. Second language, two codebases to maintain.
 
 ## Decision
 
 **Blazor WASM.**
 
-**Pros:**
-- C# throughout — compile-time errors, familiar tooling
-- Stateless — no per-user server RAM
-- Static output — GitHub Pages CDN, no server in Phase 1
-- PWA-capable (ADR-018)
-- Blazor component model handles drag-and-drop natively
+C# on both ends means a wire-format disagreement is a compile error, not a browser surprise. Stateless output makes static hosting viable (ADR-004) and costs no per-user server RAM.
 
-**Cons:**
-- ~3–4 MB first load (cached after first visit, mitigated by loading screen)
-- Some browser API calls need JS interop
-- WASM cold load slower than server-rendered HTML on very slow connections
+Accepted cons:
+
+- Multi-MB first load. Cached after first visit, masked by a loading screen.
+- Browser APIs need JS interop: `localStorage`, root-element mutation for theme and font size, focus management.
+- Slower cold load than server-rendered HTML on slow connections.
 
 ## Remarks / Sources
 
-- .NET 8 + PublishTrimmed + Brotli: ~3–4 MB total transfer
-- Previous Flask prototype: `c:\Repositories\py-oij-quizzer`
-- Re-investigate if: project needs SSR for SEO, or team unfamiliar with WASM
+- Confirmed runtime traps: base href must carry the hosting sub-path with a trailing slash or the router 404s on a direct URL (ADR-004); the app shell's sticky footer needs flex on the app root element, not `body`, because the framework renders into a child of `body`; navigate via the injected base URI, never a literal `/`; the typed JSON convenience fetch can fail silently before a component finishes initialising, so issue the request and check status explicitly.
+- Predecessor prototype: `c:\Repositories\py-oij-quizzer`
+- Revisit if server-side rendering for SEO becomes a requirement.

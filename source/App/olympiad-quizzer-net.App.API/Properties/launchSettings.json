@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "olympiad-quizzer-net.API": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:56911;http://localhost:56914"
+    }
+  }
+}

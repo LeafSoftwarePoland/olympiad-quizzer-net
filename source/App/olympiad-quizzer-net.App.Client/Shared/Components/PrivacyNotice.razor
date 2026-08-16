@@ -1,0 +1,44 @@
+@inject PreferencesService Prefs
+
+@if (_show)
+{
+    @* role="status" rather than "alert": this is information, not a warning, and alert
+       interrupts a screen reader mid-sentence. It also must not trap focus — nothing here
+       blocks the page, so a student who ignores it can still use the app. *@
+    <div class="privacy-notice" role="status">
+        <p>
+            Ta aplikacja nie używa ciasteczek i nie zbiera danych o Tobie.
+            W pamięci przeglądarki zapisujemy tylko Twoje ustawienia i postęp w quizie —
+            nigdzie ich nie wysyłamy.
+        </p>
+        <button class="btn" @onclick="AcknowledgeAsync">OK</button>
+    </div>
+}
+
+@code {
+    private bool _show;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        // Loading here rather than trusting a parent to have done it first: rendering the notice
+        // and then hiding it a frame later would flash it at someone who already dismissed it.
+        await Prefs.LoadAsync();
+
+        if (!Prefs.PrivacyNoticeAcknowledged)
+        {
+            _show = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AcknowledgeAsync()
+    {
+        await Prefs.AcknowledgePrivacyNoticeAsync();
+        _show = false;
+    }
+}

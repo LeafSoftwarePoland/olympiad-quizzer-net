@@ -1,0 +1,32 @@
+@page "/info"
+@inject AppVersionService VersionService
+
+<PageTitle>O aplikacji — Olympiad Quizzer</PageTitle>
+
+<h1>O aplikacji</h1>
+
+<div class="info-section">
+    <h2>Olympiad Quizzer</h2>
+    <p>
+        Narzędzie do ćwiczeń przed <a href="https://oij.edu.pl" target="_blank" rel="noopener noreferrer">Olimpiadą Informatyczną Juniorów</a>.
+        Zawiera pytania z poprzednich edycji etapu szkolnego, okręgowego i ogólnopolskiego.
+    </p>
+    <p>
+        Aplikacja służy do samodzielnej nauki. Pytania i odpowiedzi pochodzą z materiałów publicznych OIJ.
+        Wyniki są oceniane lokalnie — żadne dane nie są wysyłane na zewnątrz.
+    </p>
+</div>
+
+<div class="info-section">
+    <h2>Jak korzystać</h2>
+    <ul>
+        <li>Wejdź w zakładkę <a href="quiz">Quiz</a> i wybierz filtry.</li>
+        <li>Odpowiadaj na pytania, sprawdzaj wyniki na bieżąco.</li>
+        <li>Po zakończeniu zobaczysz podsumowanie z wynikami.</li>
+    </ul>
+</div>
+
+<div class="info-section">
+    <h2>Wersja</h2>
+    <p>@VersionService.GetVersion()</p>
+</div>

@@ -1,0 +1,229 @@
+@page "/quiz"
+@inject QuizSession Session
+@inject QuizSessionStore Store
+@inject ModeCatalog Modes
+@inject NavigationManager Nav
+@inject ToastService Toasts
+@inject ErrorMessageService ErrorMessages
+
+<HeadContent>
+    <meta name="robots" content="noindex" />
+</HeadContent>
+
+<PageTitle>Quiz — Olympiad Quizzer</PageTitle>
+
+<h1>Ustawienia quizu</h1>
+
+@if (_hasResumableSession)
+{
+    <div class="resume-banner">
+        <p>Masz zapisaną sesję quizu. Czy chcesz ją wznowić?</p>
+        <p class="note">
+            @_savedQuestionCount @QuestionWord(_savedQuestionCount),
+            @if (_savedTimed)
+            {
+                @($"limit {_savedTimeLimitMinutes} min, pozostało {ExamTimer.Format(_savedRemaining)}")
+            }
+            else
+            {
+                @("bez limitu czasu")
+            }
+        </p>
+        <button class="btn" @onclick="ResumeSession">Wznów quiz</button>
+        <button class="btn" @onclick="DiscardSession">Zacznij od nowa</button>
+    </div>
+}
+
+<div class="quiz-setup-form">
+    <FilterPicker Query="_query" QueryChanged="q => _query = q" />
+
+    <fieldset class="filter-section">
+        <legend>Liczba pytań (maks. @QuestionQuery.MaxLimit)</legend>
+        <input type="range"
+               class="range-input"
+               min="1"
+               max="@QuestionQuery.MaxLimit"
+               value="@_query.Limit"
+               @oninput="e => UpdateLimit(e.Value?.ToString())"
+               aria-label="Liczba pytań" />
+        <span>@_query.Limit</span>
+    </fieldset>
+
+    <fieldset class="filter-section">
+        <legend>Tryb egzaminacyjny (timer)</legend>
+        <label>
+            <input type="checkbox"
+                   checked="@_timed"
+                   @onchange="e => _timed = (bool)e.Value"
+                   aria-label="Włącz timer" />
+            Włącz odliczanie czasu
+        </label>
+        @if (_timed)
+        {
+            <p style="margin-top:0.5rem;font-size:0.88rem;color:var(--text-dim)">
+                Limit: @_timeLimitMinutes min
+            </p>
+        }
+    </fieldset>
+
+    <p style="margin-top:1rem;">
+        <button class="btn" @onclick="StartQuizAsync" disabled="@_starting">
+            @(_starting ? "Ładowanie pytań…" : "Rozpocznij quiz")
+        </button>
+    </p>
+
+    @if (_serverUnavailable)
+    {
+        <ServerUnavailable OnRetry="StartQuizAsync" />
+    }
+
+    @if (_errorHeading != null)
+    {
+        <div class="api-error" role="alert">
+            <p><strong>@_errorHeading</strong></p>
+            @if (_errorDetail != null)
+            {
+                <p>@_errorDetail</p>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private QuestionQuery _query = new QuestionQuery();
+    private bool _timed;
+    private int _timeLimitMinutes = 90;
+    private bool _starting;
+    private bool _serverUnavailable;
+    private string _errorHeading;
+    private string _errorDetail;
+    private bool _hasResumableSession;
+    private int _savedQuestionCount;
+    private bool _savedTimed;
+    private int _savedTimeLimitMinutes;
+    private TimeSpan _savedRemaining;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Modes.LoadAsync();
+
+        StageDefinition defaultStage = Modes.GetDefaultStage();
+        if (defaultStage != null)
+        {
+            _timeLimitMinutes = defaultStage.TimeLimitMinutes ?? 90;
+            if (!_query.Stages.Contains(defaultStage.StageId))
+            {
+                _query.Stages.Add(defaultStage.StageId);
+            }
+        }
+
+        QuizSessionState saved = await Store.TryLoadAsync();
+        _hasResumableSession = saved != null;
+
+        if (saved != null)
+        {
+            // A saved session keeps the settings it was created with, which may no longer match
+            // the ones above it on this page. Surfacing them stops a stale session looking like
+            // a fresh one that ignored the current settings.
+            _savedQuestionCount   = saved.Questions.Count;
+            _savedTimed           = saved.Timed;
+            _savedTimeLimitMinutes = saved.TimeLimitMinutes;
+            _savedRemaining       = ExamTimer.Remaining(saved, DateTimeOffset.UtcNow);
+        }
+    }
+
+    private static string QuestionWord(int count)
+    {
+        if (count == 1)
+        {
+            return "pytanie";
+        }
+
+        int lastTwo = count % 100;
+        int last = count % 10;
+
+        // Polish plurals: 2-4 takes the "pytania" form, except in the teens.
+        bool takesFewForm = last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14);
+
+        return takesFewForm ? "pytania" : "pytań";
+    }
+
+    private async Task ResumeSession()
+    {
+        bool resumed = await Session.TryResumeAsync();
+        if (resumed)
+        {
+            Nav.NavigateTo("quiz/run");
+        }
+        else
+        {
+            _hasResumableSession = false;
+            Toasts.ShowInfo("Nie udało się wznowić sesji. Zacznij nowy quiz.");
+        }
+    }
+
+    private async Task DiscardSession()
+    {
+        await Store.ClearAsync();
+        _hasResumableSession = false;
+    }
+
+    private async Task StartQuizAsync()
+    {
+        _starting = true;
+        _serverUnavailable = false;
+        _errorHeading = null;
+        _errorDetail = null;
+
+        try
+        {
+            await Session.StartAsync(_query, "OIJ", _timed, _timeLimitMinutes, System.Threading.CancellationToken.None);
+
+            if (!Session.HasSession)
+            {
+                Toasts.ShowInfo("Brak pytań dla wybranych filtrów. Zmień kryteria i spróbuj ponownie.");
+                return;
+            }
+
+            Nav.NavigateTo("quiz/run");
+        }
+        catch (System.Net.Http.HttpRequestException)
+        {
+            _serverUnavailable = true;
+        }
+        catch (QuizDrawException ex)
+        {
+            SetError(ex.Message);
+        }
+        catch (Exception)
+        {
+            SetError(ErrorMessages.GetMessage(null));
+        }
+        finally
+        {
+            _starting = false;
+        }
+    }
+
+    private void SetError(string message)
+    {
+        int sep = message.IndexOf('\n');
+        _errorHeading = sep >= 0 ? message[..sep] : message;
+        _errorDetail = sep >= 0 ? message[(sep + 1)..] : null;
+    }
+
+    private void UpdateLimit(string value)
+    {
+        if (int.TryParse(value, out int limit))
+        {
+            _query = new QuestionQuery
+            {
+                Limit = Math.Clamp(limit, 1, QuestionQuery.MaxLimit),
+                Categories = _query.Categories,
+                Algorithms = _query.Algorithms,
+                Stages = _query.Stages,
+                Years = _query.Years
+            };
+        }
+    }
+}

@@ -1,0 +1,5 @@
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; }
+}
+
+<BlockRenderer Blocks="Question.Content" />

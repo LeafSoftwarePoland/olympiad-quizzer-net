@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>olympiad-quizzer-net.Core.Domain</AssemblyName>
+    <RootNamespace>OlympiadQuizzer.Core.Domain</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <Target Name="AssertDomainHasNoDependencies" BeforeTargets="Build">
+    <Error Condition="'@(ProjectReference)' != ''"
+           Text="Domain must have zero project references. Found: @(ProjectReference)" />
+    <Error Condition="'@(PackageReference)' != ''"
+           Text="Domain must have zero package references. Found: @(PackageReference)" />
+  </Target>
+
+</Project>

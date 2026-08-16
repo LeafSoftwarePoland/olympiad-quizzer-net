@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>olympiad-quizzer-net.App.API.L1</AssemblyName>
+    <RootNamespace>OlympiadQuizzer.App.Api.L1</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\olympiad-quizzer-net.Core.Domain\olympiad-quizzer-net.Core.Domain.csproj" />
+    <ProjectReference Include="..\..\Core\olympiad-quizzer-net.Core.Tests.Common\olympiad-quizzer-net.Core.Tests.Common.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\olympiad-quizzer-net.Infrastructure.SQLite\olympiad-quizzer-net.Infrastructure.SQLite.csproj" />
+    <ProjectReference Include="..\olympiad-quizzer-net.App.API\olympiad-quizzer-net.App.API.csproj" />
+  </ItemGroup>
+
+
+</Project>

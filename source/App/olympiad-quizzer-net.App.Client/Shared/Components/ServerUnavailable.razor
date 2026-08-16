@@ -1,0 +1,11 @@
+@code {
+    [Parameter] public EventCallback OnRetry { get; set; }
+}
+
+<div class="server-unavailable" role="alert">
+    <p>Serwer jest chwilowo niedostępny. Spróbuj ponownie za kilka minut.</p>
+    @if (OnRetry.HasDelegate)
+    {
+        <button class="btn" @onclick="OnRetry">Spróbuj ponownie</button>
+    }
+</div>

@@ -59,7 +59,24 @@ nunit-*.xml
 # GitHub Actions self-hosted runner
 actions-runner/
 
+# Visual Studio local IDE state (solution caches, .suo, etc.)
+.vs
+
 # Pipeline artifacts — local only, not for version control
 .pipeline/
 
-source/client/wwwroot/lib/
+.remember/
+.resources/
+.research/
+
+# Publish output from local deploy dry-runs
+publish-out/
+
+# Client static-asset fingerprint manifests (regenerated on every build)
+**/wwwroot/*.staticwebassets.endpoints.json
+.claude
+# Visual Studio per-user state (added 2026-08-16)
+*.user
+*.suo
+*.userosscache
+*.sln.docstates

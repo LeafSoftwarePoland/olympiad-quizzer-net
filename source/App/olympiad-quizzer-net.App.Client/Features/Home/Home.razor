@@ -1,0 +1,17 @@
+@page "/"
+@inject NavigationManager Nav
+
+<PageTitle>Olympiad Quizzer</PageTitle>
+
+<h1>Olympiad Quizzer</h1>
+<p>Ćwicz przed olimpiadą — odpowiadaj na pytania z poprzednich edycji OIJ.</p>
+<p>
+    <button class="btn" @onclick="StartQuiz">Rozpocznij quiz</button>
+</p>
+
+@code {
+    private void StartQuiz()
+    {
+        Nav.NavigateTo("quiz");
+    }
+}

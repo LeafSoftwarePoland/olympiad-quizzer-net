@@ -1,0 +1,25 @@
+@code {
+    [Parameter, EditorRequired] public Question Question { get; set; }
+    [Parameter, EditorRequired] public SubmittedAnswer Answer { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public EventCallback<SubmittedAnswer> AnswerChanged { get; set; }
+}
+
+<ContentRenderer Question="Question" />
+
+@switch (Question.Type)
+{
+    case QuestionType.Single:
+    case QuestionType.TrueFalse:
+        <SingleQuestion Question="Question" Answer="Answer" ReadOnly="ReadOnly" AnswerChanged="AnswerChanged" />
+        break;
+    case QuestionType.Multi:
+        <MultiQuestion Question="Question" Answer="Answer" ReadOnly="ReadOnly" AnswerChanged="AnswerChanged" />
+        break;
+    case QuestionType.ShortAnswer:
+        <ShortAnswerQuestion Question="Question" Answer="Answer" ReadOnly="ReadOnly" AnswerChanged="AnswerChanged" />
+        break;
+    default:
+        <p>Nieobsługiwany typ pytania.</p>
+        break;
+}
