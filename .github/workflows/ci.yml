@@ -5,7 +5,98 @@ on:
     branches: [main]
 
 jobs:
+  # Steps that run `shell: powershell` execute under Windows PowerShell 5.1, which reads the
+  # generated .ps1 as the system codepage rather than UTF-8. A single non-ASCII character - an em
+  # dash in an error message was the real case - corrupts the string and the script fails to parse
+  # before running a line. The failure names a missing quote terminator and says nothing about
+  # encoding, so it costs a deploy cycle to diagnose. Cheaper to refuse the character.
+  workflow-charset:
+    name: Workflows are ASCII-only
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Reject non-ASCII in workflow files
+        run: |
+          if LC_ALL=C grep -nP '[^\x00-\x7F]' .github/workflows/*.yml; then
+            echo "::error::Non-ASCII character in a workflow file. Windows PowerShell 5.1 cannot parse it."
+            exit 1
+          fi
+          echo "All workflow files are ASCII."
+
+  # Everything deploy-frontend.yml does except the upload. The publish and the post-processing
+  # that rewrites the base href and writes appsettings.json only ever ran during a deploy, so a
+  # break in either was discovered in production. The version resolve is shared by both deploy
+  # workflows, so a malformed Directory.Build.props fails here rather than mid-release.
+  frontend-publish:
+    name: Frontend publishes and post-processes
+    needs: [build-docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Resolve the version the way both deploys resolve it
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $content = [System.IO.File]::ReadAllText('Directory.Build.props')
+          $match = [regex]::Match($content, '<Version>\s*([0-9]+\.[0-9]+\.[0-9]+)\s*</Version>')
+          if (-not $match.Success) {
+            throw "Directory.Build.props has no three-segment <Version> element."
+          }
+          Write-Host "Version resolves to $($match.Groups[1].Value)."
+
+      - name: Publish
+        shell: pwsh
+        run: dotnet publish source/App/olympiad-quizzer-net.App.Client/olympiad-quizzer-net.App.Client.csproj -c Release -o publish-out
+
+      # A placeholder stands in for the real API URL. The secret is unavailable to fork pull
+      # requests, and this step is proving the rewrite runs, not what it writes.
+      - name: Rewrite base href, inject API URL, add Pages files
+        shell: pwsh
+        env:
+          RENDER_API_URL: https://example.invalid
+        run: |
+          $root = "publish-out/wwwroot"
+          $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+          $index = Join-Path $root "index.html"
+          $html  = [System.IO.File]::ReadAllText($index)
+          $html  = $html -replace '<base\s+href="[^"]*"\s*/?>', '<base href="/olympiad-quizzer-net/" />'
+          [System.IO.File]::WriteAllText($index, $html, $utf8NoBom)
+
+          Copy-Item $index (Join-Path $root "404.html") -Force
+          [System.IO.File]::WriteAllText((Join-Path $root ".nojekyll"), "", $utf8NoBom)
+
+          $cfg = '{ "ApiBaseUrl": "' + $env:RENDER_API_URL.TrimEnd('/') + '" }'
+          [System.IO.File]::WriteAllText((Join-Path $root "appsettings.json"), $cfg, $utf8NoBom)
+
+      # The rewrite is a regex over generated HTML. It fails silently if the markup shifts, so
+      # assert the result rather than trusting that the step exited zero.
+      - name: Check the post-processing produced what Pages needs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = "publish-out/wwwroot"
+
+          foreach ($file in @("index.html", "404.html", ".nojekyll", "appsettings.json")) {
+            $path = Join-Path $root $file
+            if (-not (Test-Path $path)) { throw "$file is missing from the publish output." }
+          }
+
+          $html = [System.IO.File]::ReadAllText((Join-Path $root "index.html"))
+          if ($html -notmatch '<base href="/olympiad-quizzer-net/" />') {
+            throw "The base href was not rewritten - every asset path would 404 on Pages."
+          }
+
+          Write-Host "Publish output is shaped correctly for GitHub Pages."
+
   build-and-test:
+    name: Build and test
+    needs: [workflow-charset]
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v7.0.1
@@ -29,6 +120,7 @@ jobs:
   # never copied into the context. None of them is visible to dotnet build or dotnet test.
   build-docker:
     name: Docker image builds and boots
+    needs: [build-and-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1

@@ -1,14 +1,14 @@
 name: deploy-frontend
 run-name: Deploy Frontend
 
-# No version input. The version is whatever Directory.Build.props holds on the deployed commit —
+# No version input. The version is whatever Directory.Build.props holds on the deployed commit -
 # set it there and the deploy carries it. A run name cannot read a file, so it stays generic and
 # the resolved version goes to the run summary.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write     # was: read — tag creation needs write
+  contents: write     # was: read - tag creation needs write
   pages: write
   id-token: write
 
@@ -101,7 +101,7 @@ jobs:
           # The version no longer comes from tags, so redeploying the same commit is legitimate and
           # must not fail at the last step just because its tag already exists.
           if git ls-remote --exit-code --tags origin "frontend-v$VERSION" >/dev/null 2>&1; then
-            echo "Tag frontend-v$VERSION already exists — redeploy of an unchanged version." \
+            echo "Tag frontend-v$VERSION already exists - redeploy of an unchanged version." \
               >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi

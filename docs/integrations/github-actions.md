@@ -8,8 +8,31 @@ GitHub Actions is the CI/CD platform for this repo. It runs build, test, and dep
 
 | Workflow | File | Trigger | Runner | Purpose |
 |---|---|---|---|---|
-| CI — build and test | `ci.yml` | PR to `main` | `self-hosted` | Build + test |
-| CI — docker | `ci.yml` | PR to `main` | `ubuntu-latest` | Build the API image and boot it |
+| CI - charset | `ci.yml` | PR to `main` | `ubuntu-latest` | Reject non-ASCII in workflow files |
+| CI - frontend publish | `ci.yml` | PR to `main` | `ubuntu-latest` | Publish the client and post-process it, without uploading |
+| CI - build and test | `ci.yml` | PR to `main` | `self-hosted` | Build + test |
+| CI - docker | `ci.yml` | PR to `main` | `ubuntu-latest` | Build the API image and boot it |
+
+**The jobs are chained, not parallel.** Each gate is cheaper than the one it protects:
+
+```
+workflow-charset  ->  build-and-test  ->  build-docker  ->  frontend-publish
+   (seconds)          (self-hosted)       (image + boot)     (publish + rewrite)
+```
+
+There is no point building an image for code whose tests fail, or post-processing a release whose
+image does not build. A failure stops the chain there and the later jobs are skipped rather than
+run and wasted.
+
+**Everything a deploy does except the deploying runs on every pull request.** The deploy workflows
+were the only place the Dockerfile, the frontend post-processing and the version resolve were ever
+exercised, so a break in any of them was discovered in production. What remains deploy-only is the
+upload to Pages, the Render hook, and the tag push.
+
+`shell: powershell` on the self-hosted runner is **Windows PowerShell 5.1**, which reads the
+generated `.ps1` as the system codepage. One non-ASCII character corrupts the string and the script
+fails to parse before running a line, reporting a missing quote terminator and never mentioning
+encoding. The charset job refuses the character rather than leaving the next reader to diagnose it.
 | Version bump | `version-bump.yml` | `pull_request` (`opened` only) | `ubuntu-latest` | Bump the patch in `Directory.Build.props` when the branch still matches base |
 | Deploy backend | `deploy-backend.yml` | `workflow_dispatch` | `self-hosted` | Trigger Render deploy hook + poll `/healthz` |
 | Deploy frontend | `deploy-frontend.yml` | `workflow_dispatch` | `ubuntu-latest` | Publish WASM → GitHub Pages |
