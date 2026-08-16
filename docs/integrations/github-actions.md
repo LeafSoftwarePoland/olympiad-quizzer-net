@@ -23,14 +23,18 @@ redeploying an unchanged commit is not a failure.
 
 ## Self-hosted runner
 
-The CI and backend deploy jobs run on a Windows laptop registered as a self-hosted GitHub Actions runner.
+The CI and backend deploy jobs run on a self-hosted GitHub Actions runner.
+
+The runner must be **Windows** — the backend deploy job uses PowerShell and the CI job relies on a
+pre-installed .NET SDK. Nothing else about the machine is recorded here on purpose: it can be
+replaced at any time, and swapping hardware should not require a documentation change.
 
 **Why self-hosted:**
 - No GitHub-hosted runner minutes consumed for frequent CI builds.
 - .NET 10 SDK pre-installed — no `setup-dotnet` step needed (and it would fail without write access to `C:\Program Files\dotnet`).
-- Windows environment mirrors the local development machine.
+- Windows environment mirrors local development.
 
-**Registration**: runner registered via `github.com/<org>/<repo>/settings/actions/runners`. The runner service runs as a background service on the machine.
+**Registration**: runner registered via `github.com/<org>/<repo>/settings/actions/runners`. The runner service runs as a background service.
 
 **When the machine is off**: queued workflow runs wait. CI will be blocked until the machine wakes. No auto-queuing timeout by default — jobs stay pending until the runner comes online or the workflow times out (6 h).
 
