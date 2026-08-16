@@ -15,6 +15,7 @@ What lives in `docs/` and how to maintain it.
 | Tag vocabulary | `docs/tags.md` | The controlled `category[]` / `algorithms[]` values. Authoritative — the integrity suite validates the bank against it | See file header |
 | Architecture guide | `docs/architecture-guide.md` | Layer definitions, test levels, document hierarchy | Self-describing |
 | Development guide | `docs/development.md` | Local run, project structure, deploy. English, for contributors — the root `README.md` is Polish and for users | Self-describing |
+| Transfer runbook | `docs/repo-transfer.md` | Everything coupled to the repository owner, in the order it must be done. One-time, but reconstructing it under time pressure is the expensive way | Self-describing |
 | Coding standards | `docs/standards/` | How code is written and reviewed. Enforced at every PR. | `docs/standards/INDEX.md` |
 
 `docs/standards/INDEX.md` is a **map, not a substitute** — anyone writing code reads every file it lists, in full.
