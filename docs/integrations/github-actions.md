@@ -8,7 +8,8 @@ GitHub Actions is the CI/CD platform for this repo. It runs build, test, and dep
 
 | Workflow | File | Trigger | Runner | Purpose |
 |---|---|---|---|---|
-| CI | `ci.yml` | push / PR to `main` | `self-hosted` | Build + test |
+| CI — build and test | `ci.yml` | PR to `main` | `self-hosted` | Build + test |
+| CI — docker | `ci.yml` | PR to `main` | `ubuntu-latest` | Build the API image and boot it |
 | Version bump | `version-bump.yml` | `pull_request` (`opened` only) | `ubuntu-latest` | Bump the patch in `Directory.Build.props` when the branch still matches base |
 | Deploy backend | `deploy-backend.yml` | `workflow_dispatch` | `self-hosted` | Trigger Render deploy hook + poll `/healthz` |
 | Deploy frontend | `deploy-frontend.yml` | `workflow_dispatch` | `ubuntu-latest` | Publish WASM → GitHub Pages |
@@ -54,7 +55,12 @@ Public repo = GitHub-hosted runners are free. No minute budget concern.
   - `dotnet build OlympiadQuizzer.slnx -c Release`
   - `dotnet test OlympiadQuizzer.slnx -c Release --no-build`
   - No `setup-dotnet` step — SDK pre-installed on runner.
-- **build-docker** — omitted. Docker Desktop not available on the self-hosted runner (permission denied on `npipe://...`). Dockerfile is exercised on every Render deploy.
+- **build-docker** (`ubuntu-latest`): builds the API image with the same Dockerfile path and
+  build context Render uses, then runs it and polls `/healthz`. It runs on a hosted runner
+  because Docker Desktop is unavailable on the self-hosted one (permission denied on
+  `npipe://...`). Added after three faults reached production that no .NET build could see: a
+  stale Dockerfile path, a csproj content item naming a file the build stage deliberately
+  lacks, and a props file missing from the context.
 
 ## Backend deploy job details (`deploy-backend.yml`)
 

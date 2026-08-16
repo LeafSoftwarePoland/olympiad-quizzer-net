@@ -80,3 +80,6 @@ publish-out/
 *.suo
 *.userosscache
 *.sln.docstates
+
+# VS Code workspace state (added 2026-08-16)
+.vscode/
