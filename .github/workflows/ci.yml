@@ -20,6 +20,45 @@ jobs:
       - name: Test
         run: dotnet test OlympiadQuizzer.slnx -c Release --no-build --logger "console;verbosity=normal"
 
-  # build-docker omitted: Docker Desktop is not available on the self-hosted runner
-  # (permission denied on npipe:////./pipe/docker_engine). The Dockerfile is exercised
-  # on every Render.com deploy via deploy-backend.yml.
+  # Runs on ubuntu-latest, not self-hosted: Docker Desktop is unavailable there (permission
+  # denied on npipe:////./pipe/docker_engine). Hosted minutes are free on a public repo.
+  #
+  # This job exists because the deploy is the only thing that had ever exercised the Dockerfile,
+  # so three separate faults reached production undetected: a stale Dockerfile path, a csproj
+  # content item naming a file the build stage deliberately lacks, and a props file that was
+  # never copied into the context. None of them is visible to dotnet build or dotnet test.
+  build-docker:
+    name: Docker image builds and boots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      # Context and -f mirror the Render service settings deliberately. Building any other way
+      # would pass while the real deploy fails, which is the failure this job exists to catch.
+      - name: Build the API image the way the host builds it
+        run: |
+          docker build \
+            -f source/App/olympiad-quizzer-net.App.API/Dockerfile \
+            -t olympiad-quizzer-net-api:ci \
+            .
+
+      # A built image is not a working one. A missing or schema-mismatched database is fatal at
+      # startup by design (ADR-029), so booting proves the runtime stage assembled a usable app.
+      - name: Boot it and wait for the health endpoint
+        run: |
+          docker run -d --name api-ci -p 10000:10000 olympiad-quizzer-net-api:ci
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://localhost:10000/healthz > /dev/null 2>&1; then
+              echo "healthz responded after ${attempt} attempt(s):"
+              curl -sS http://localhost:10000/healthz
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::The container never answered /healthz."
+          docker logs api-ci
+          exit 1
+
+      - name: Stop the container
+        if: always()
+        run: docker rm -f api-ci 2>/dev/null || true
