@@ -56,19 +56,15 @@ credential no longer matches either.
 
 ## 4. Update the allowed origin - this is the one that breaks the app
 
-The API validates the caller's origin against a hardcoded value.
+The API reads the allowed Pages origin from a Render environment variable. No code change or PR
+needed - this is a dashboard change followed by a redeploy.
 
-- [ ] `source/App/olympiad-quizzer-net.App.API/Extensions/CorsExtensions.cs` - the allowed Pages
-      origin.
-- [ ] `source/App/olympiad-quizzer-net.App.API.L0/Extensions/CorsExtensionsTests.cs` - the allowed
-      and rejected cases, including the lookalike-domain case.
-- [ ] `source/App/olympiad-quizzer-net.App.API.L2/Extensions/CorsExtensionsTests.cs` - the
-      preflight case.
-- [ ] Run the tests. They pin the old value, so they fail until all three are updated. That is the
-      intended behaviour and the only automated warning that this step exists.
+- [ ] Render dashboard → the API service → Environment → find `Cors__AllowedOrigin` → set it to
+      `https://<new-owner>.github.io`.
+- [ ] Deploy the backend (trigger `deploy-backend.yml` or deploy from the Render dashboard).
 
-**Then deploy the backend.** Until that lands, the frontend gets the generic error screen on every
-request and the browser console shows a CORS rejection - the same symptom as an API that is down.
+**Until the new backend is live**, the frontend gets the generic error screen on every request and
+the browser console shows a CORS rejection - the same symptom as an API that is down.
 
 ## 5. Update the documentation
 
@@ -103,13 +99,10 @@ time; updating it would falsify the record rather than maintain it.
 
 ---
 
-## Why the origin is in code at all
+## Why the origin is in configuration
 
-It is a value that changes with the owner, compiled into the API, and requires a backend release
-to alter. Moving it to configuration would make a future transfer an environment variable rather
-than a code change - the same reasoning that moved the version into `Directory.Build.props`
-(ADR-026) and kept the runner's hardware out of `integrations/github-actions.md`.
-
-Not done, because it is a decision rather than a fix: configuration is one more thing that can be
-wrong in a place nothing validates, which is exactly how the Render Dockerfile path went stale.
-Worth deciding before the next move rather than during it.
+The allowed Pages origin is set as a Render environment variable (`Cors__AllowedOrigin`) rather
+than compiled into the API. A future owner change requires only a dashboard update and a redeploy,
+not a PR. The trade-off - configuration can be wrong in a place nothing validates - is accepted here
+because the value is short, has one consumer, and the deploy verification step catches a missing or
+wrong value immediately (CORS rejections appear in the browser console on the first quiz request).

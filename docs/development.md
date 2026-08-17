@@ -98,7 +98,7 @@ Both deploys are **manual** (`workflow_dispatch`) — no automatic deploys on pu
 | Frontend (Blazor WASM) | GitHub Pages | `.github/workflows/deploy-frontend.yml` |
 | API (ASP.NET Core) | Render.com (Docker) | `.github/workflows/deploy-backend.yml` |
 
-Live frontend: `https://leafsoftwarepoland.github.io/olympiad-quizzer-net/`
+Live frontend: `https://ucz-sie-olimpiada.github.io/olympiad-quizzer-net/`
 Live API: `https://olympiad-quizzer-net-api.onrender.com`
 
 A content-only change still needs a backend deploy — the bank ships inside the container image.
