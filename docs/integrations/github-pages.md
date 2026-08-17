@@ -2,9 +2,9 @@
 
 ## What it is / why we use it
 
-GitHub Pages hosts the Blazor WASM frontend as a static site, served from the `leafsoftwarepoland/olympiad-quizzer-net` repo. Chosen because it is free permanently, CDN-backed, and requires no card. See ADR-004 for the full platform comparison.
+GitHub Pages hosts the Blazor WASM frontend as a static site, served from the `ucz-sie-olimpiada/olympiad-quizzer-net` repo. Chosen because it is free permanently, CDN-backed, and requires no card. See ADR-004 for the full platform comparison.
 
-Live frontend: `https://leafsoftwarepoland.github.io/olympiad-quizzer-net/`
+Live frontend: `https://ucz-sie-olimpiada.github.io/olympiad-quizzer-net/`
 
 ## How deployment works
 
@@ -63,8 +63,8 @@ but adding the domain-root robots.txt is belt-and-suspenders.
 
 **Step-by-step (one time only):**
 
-1. Open `github.com/LeafSoftwarePoland/leafsoftwarepoland.github.io` in a browser.
-   - If the repo does not exist: create it — the repo name must be exactly `leafsoftwarepoland.github.io` (all lowercase). Enable GitHub Pages: Settings → Pages → Source: Deploy from branch → `main` / `/ (root)`.
+1. Open `github.com/ucz-sie-olimpiada/ucz-sie-olimpiada.github.io` in a browser.
+   - If the repo does not exist: create it — the repo name must be exactly `ucz-sie-olimpiada.github.io` (all lowercase). Enable GitHub Pages: Settings → Pages → Source: Deploy from branch → `main` / `/ (root)`.
 2. Create (or edit) the file `robots.txt` at the repo root with this content:
    ```
    User-agent: *
@@ -73,13 +73,13 @@ but adding the domain-root robots.txt is belt-and-suspenders.
    Disallow: /olympiad-quizzer-net/settings
    ```
 3. Commit to `main`. Pages picks it up immediately (no workflow needed).
-4. Verify: open `https://leafsoftwarepoland.github.io/robots.txt` in a browser and confirm the file is live.
+4. Verify: open `https://ucz-sie-olimpiada.github.io/robots.txt` in a browser and confirm the file is live.
 
 Note: expand the `Disallow` list here whenever new app paths should be excluded from search indexing.
 
 ## Links
 
-- Live URL: `https://leafsoftwarepoland.github.io/olympiad-quizzer-net/`
+- Live URL: `https://ucz-sie-olimpiada.github.io/olympiad-quizzer-net/`
 - ADR-004 (platform decision): `docs/adl/ADR-004-github-pages-hosting.md`
 - ADR-015 (manual-only deploy): `docs/adl/ADR-015-frontend-deploy-manual-only.md`
 - Deploy workflow: `.github/workflows/deploy-frontend.yml`

@@ -29,6 +29,7 @@ validates them. A rename in the repository silently invalidates them until the n
 | Build command | blank |
 | Port | `10000` |
 | Branch | `main` |
+| Environment variable `Cors__AllowedOrigin` | `https://<owner>.github.io` — the GitHub Pages origin the API accepts. Update this when the repository owner changes, then redeploy. |
 
 **The build context must be the repository root**, not the API folder. The Dockerfile copies
 `source/Core/`, `source/Infrastructure/`, `Directory.Build.props` and `data/`, all of which sit
@@ -59,7 +60,7 @@ Runtime stage: mcr.microsoft.com/dotnet/aspnet:10.0
 - `GET /v1/questions` — filtered, shuffled, capped question payload as JSON.
 - `GET /v1/filters` — filter values present in the bank, with counts.
 
-CORS is configured to allow requests from the GitHub Pages origin (`https://leafsoftwarepoland.github.io`).
+CORS allowed origin is read from the `Cors__AllowedOrigin` environment variable set in the Render dashboard. Localhost is always allowed for local development regardless of this setting.
 
 ## Free tier limits
 

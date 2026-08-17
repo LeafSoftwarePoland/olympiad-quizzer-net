@@ -24,7 +24,7 @@ ADRs state **WHAT** was decided and **WHY** — not **HOW**. No class, method, i
 | [ADR-001](ADR-001-blazor-wasm-frontend.md) | Blazor WASM as frontend framework | Accepted | 2026-08-08 |
 | [ADR-002](ADR-002-question-repository-abstraction.md) | Question repository abstraction | Accepted | 2026-08-08 |
 | [ADR-003](ADR-003-single-unified-app.md) | Single unified app for OIJ and voivodeship konkursy | Accepted | 2026-08-08 |
-| [ADR-004](ADR-004-github-pages-hosting.md) | GitHub Pages for WASM static hosting | Accepted | 2026-08-08 |
+| [ADR-004](ADR-004-github-pages-hosting.md) | GitHub Pages for WASM static hosting | Accepted | 2026-08-17 |
 | [ADR-005](ADR-005-render-com-api-hosting.md) | Render.com for API hosting | Accepted | 2026-08-16 |
 | [ADR-006](ADR-006-oracle-cloud-deferred.md) | Oracle Cloud Always Free — deferred | Deferred | 2026-08-08 |
 | [ADR-007](ADR-007-unified-question-schema.md) | Unified question schema | Accepted | 2026-08-13 |

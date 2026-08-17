@@ -32,3 +32,7 @@ Accepted cons:
 - The SDK-install CI step fails on the self-hosted Windows runner (no write access to the global install path). Removed — the SDK is already installed machine-wide.
 - Deploys are manual only (ADR-015).
 - Future: move to a custom domain if crawler control or a clean host root becomes worth a domain and a DNS change.
+
+## Amendment — 2026-08-17 — repository owner renamed
+
+Live URL updated: `https://ucz-sie-olimpiada.github.io/olympiad-quizzer-net/`. Repository moved from `LeafSoftwarePoland` to `ucz-sie-olimpiada`; repo name and base href unchanged.

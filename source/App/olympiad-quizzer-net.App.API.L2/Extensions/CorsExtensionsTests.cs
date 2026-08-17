@@ -7,17 +7,20 @@ namespace OlympiadQuizzer.App.Api.L2.Extensions;
 public sealed class CorsExtensionsTests(WebApplicationFactory<Program> factory)
     : IClassFixture<WebApplicationFactory<Program>>
 {
+    private const string _configuredOrigin = "https://pages.example.com";
+
     [Fact]
     public async Task UseFrontendCors_ReturnsAccessControlAllowOriginHeader_WhenPreflightFromAllowedOrigin()
     {
         // Arrange
-        const string allowedOrigin = "https://leafsoftwarepoland.github.io";
         const string preflightRoute = "/v1/questions";
         const string requestedMethod = "GET";
 
-        HttpClient client = factory.CreateClient();
+        HttpClient client = factory
+            .WithWebHostBuilder(b => b.UseSetting("Cors:AllowedOrigin", _configuredOrigin))
+            .CreateClient();
         HttpRequestMessage request = new(HttpMethod.Options, preflightRoute);
-        request.Headers.Add("Origin", allowedOrigin);
+        request.Headers.Add("Origin", _configuredOrigin);
         request.Headers.Add("Access-Control-Request-Method", requestedMethod);
 
         // Act
@@ -26,7 +29,7 @@ public sealed class CorsExtensionsTests(WebApplicationFactory<Program> factory)
         // Assert
         Assert.True(
             response.Headers.Contains("Access-Control-Allow-Origin"),
-            $"Expected 'Access-Control-Allow-Origin' header to be present for allowed origin '{allowedOrigin}'");
+            $"Expected 'Access-Control-Allow-Origin' header to be present for allowed origin '{_configuredOrigin}'");
     }
 
     [Fact]
@@ -37,7 +40,9 @@ public sealed class CorsExtensionsTests(WebApplicationFactory<Program> factory)
         const string preflightRoute = "/v1/questions";
         const string requestedMethod = "GET";
 
-        HttpClient client = factory.CreateClient();
+        HttpClient client = factory
+            .WithWebHostBuilder(b => b.UseSetting("Cors:AllowedOrigin", _configuredOrigin))
+            .CreateClient();
         HttpRequestMessage request = new(HttpMethod.Options, preflightRoute);
         request.Headers.Add("Origin", disallowedOrigin);
         request.Headers.Add("Access-Control-Request-Method", requestedMethod);

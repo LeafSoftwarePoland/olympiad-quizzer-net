@@ -22,7 +22,7 @@ public class Program
         });
 
         builder.Services.AddApiJsonOptions();
-        builder.Services.AddFrontendCors();
+        builder.Services.AddFrontendCors(builder.Configuration["Cors:AllowedOrigin"] ?? string.Empty);
         builder.Services.AddProblemDetails();
         builder.Services.AddControllers();
         builder.Services.AddQuestionBankInfrastructure(builder.Configuration);
